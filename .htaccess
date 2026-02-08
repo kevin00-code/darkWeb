@@ -1,0 +1,5 @@
+# Block public access to the JSON database
+<Files "vault_db.json">
+    Order Allow,Deny
+    Deny from all
+</Files>
