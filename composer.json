@@ -1,0 +1,7 @@
+{
+    "name": "dark-web/terminal",
+    "description": "Integrated Intelligence Terminal",
+    "require": {
+        "php": ">=7.4"
+    }
+}
