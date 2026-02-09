@@ -1,7 +1,5 @@
 <?php
 session_start();
-
-// If the form is submitted, save the name and go to the terminal
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['username'])) {
     $_SESSION['codename'] = htmlspecialchars($_POST['username']);
     header("Location: darkchat.php");
@@ -18,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['username'])) {
 <body>
     <div class="chat-container login-box">
         <h1 id="welcome">SYSTEM ACCESS</h1>
-        <form action="login.php" method="POST" class="login-form">
+        <form action="index.php" method="POST" class="login-form">
             <label>CODENAME:</label>
             <input type="text" name="username" required autocomplete="off">
             
