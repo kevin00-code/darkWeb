@@ -1,8 +1,8 @@
 <?php
-require_once 'auth_check.php';
+session_start();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize and store the codename in the session
+// If the form is submitted, save the name and go to the terminal
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['username'])) {
     $_SESSION['codename'] = htmlspecialchars($_POST['username']);
     header("Location: darkchat.php");
     exit();
