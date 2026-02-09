@@ -126,7 +126,7 @@ if (isset($_POST['ajax_query'])) {
   </div>
 
   <div id="savedMessages" class="messages">
-      <p class="NullPointer">> Handshake stable. Systems nominal.</p>
+      <p class="NullPointer">> System Handshaking...</p>
   </div>
 
   <form class="input-area" id="searchForm">
@@ -136,6 +136,35 @@ if (isset($_POST['ajax_query'])) {
 </div>
 
 <script>
+    // --- CONNECTION MONITORING ---
+function updateOnlineStatus() {
+    const light = document.getElementById("connection-light");
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const rtt = connection ? connection.rtt : null;
+
+    light.className = ""; // Reset classes
+
+    if (navigator.onLine) {
+        // If online, show latency
+        if (rtt) {
+            light.textContent = `[CONNECTED: ${rtt}ms]`;
+            // Green if low latency, Gold if high
+            light.classList.add(rtt < 150 ? "status-low" : "status-high");
+        } else {
+            light.textContent = "[CONNECTED]";
+            light.classList.add("status-low");
+        }
+    } else {
+        // IF OFFLINE: BLINK RED
+        light.textContent = "[DISCONNECTED]";
+        light.classList.add("status-offline", "blink");
+    }
+}
+
+// Check connection status every 2 seconds
+setInterval(updateOnlineStatus, 2000);
+updateOnlineStatus(); // Initial check
+    
 // --- SOUND SYSTEM ---
 const SoundEngine = {
     ctx: null,
@@ -245,4 +274,5 @@ async function selfDestruct() {
 </script>
 </body>
 </html>
+
 
