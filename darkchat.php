@@ -171,6 +171,15 @@ document.getElementById('searchForm').onsubmit = async (e) => {
         display.innerHTML = `<p class="ZeroDay">> UPLINK ERROR: CONNECTION REFUSED</p>`;
     }
     box.value = "";
+}
+    
+    function drilldownSearch(term) {
+    const box = document.getElementById('messageBox');
+    box.value = term;
+    // Sound feedback for the "jump"
+    SoundEngine.blip(400, 0.1);
+    // Trigger the form submission
+    document.getElementById('searchForm').requestSubmit();
 };
 
 function buildNodeHTML(res) {
@@ -209,6 +218,14 @@ function buildNodeHTML(res) {
         html += `</div>`;
     }
 
+if (res.wiki && res.query) {
+    html += `<div class="drilldown-container" style="margin-top:20px; border-top:1px dashed #00ff41; padding-top:10px;">
+                <p class="NullPointer" style="font-size:0.7rem;">> RELATED_NODES_DETECTED:</p>
+                <button class="sync-btn" onclick="drilldownSearch('${res.query} history')">SYNC: ${res.query.toUpperCase()}_HISTORY</button>
+                <button class="sync-btn" onclick="drilldownSearch('${res.query} technical')">SYNC: ${res.query.toUpperCase()}_TECH</button>
+             </div>`;
+}
+
     html += `</div>`;
     return html;
 }
@@ -243,3 +260,4 @@ async function purgeVault() {
 </script>
 </body>
 </html>
+
