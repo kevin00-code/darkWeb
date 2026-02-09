@@ -1,12 +1,14 @@
 <?php
 session_start();
-
-// Redirect to login if they haven't set a codename
-if (!isset($_SESSION['codename'])) {
-    header("Location: login.php");
-    exit();
+// Check if auth_check.php exists before requiring
+if (file_exists('auth_check.php')) {
+    require_once 'auth_check.php';
 }
 
+if (!isset($_SESSION['codename'])) {
+    header("Location: index.php");
+    exit();
+}
 $username = $_SESSION['codename'];
 ?>
 <!DOCTYPE html>
@@ -19,25 +21,24 @@ $username = $_SESSION['codename'];
 </head>
 <body>
 
-<button class="delete-btn" onclick="terminateSession()">TERMINATE SESSION</button>
+<button class="delete-btn" onclick="clearMessages()">DELETE HISTORY</button>
 
 <div class="chat-container">
   <div class="header-row">
       <div class="header-left">
           <div id="vault-stats" class="ZeroDay">VAULT_ENTRIES: 0 NODES ARCHIVED</div>
       </div>
-      
       <div class="header-center">
           <h1 id="welcome">USER // <?php echo strtoupper($username); ?></h1>
       </div>
-
       <div class="header-right"></div>
   </div>
 
   <div class="status-bar">
     <div>STATUS: <span id="connection-light">[CONNECTED]</span></div> 
     <button class="scrub-btn" onclick="clearDisplay()">CLEAR TERMINAL</button>
-</div>
+  </div>
+
   <div id="savedMessages" class="messages">
       <p class="NullPointer">> System handshaking...</p>
   </div>
@@ -49,16 +50,8 @@ $username = $_SESSION['codename'];
 </div>
 
 <script>
-    // Pass PHP variable to JS
+    // 1. Get username from PHP Session
     const username = "<?php echo $username; ?>";
-
-    function terminateSession() {
-        if(confirm("BURN SESSION AND LOGOUT?")) {
-            window.location.href = "logout.php";
-        }
-    }
-
-    /* --- YOUR ORIGINAL JS LOGIC BELOW --- */
     let currentActiveNode = null;
 
     const SoundEngine = {
@@ -99,6 +92,7 @@ $username = $_SESSION['codename'];
     let db;
     let savedDiv;
 
+    // 2. Open IndexedDB
     const request = indexedDB.open(DB_NAME, 1);
     request.onupgradeneeded = (e) => {
         db = e.target.result;
@@ -117,13 +111,8 @@ $username = $_SESSION['codename'];
         const rtt = connection ? connection.rtt : null;
         light.className = "";
         if (navigator.onLine) {
-            if (rtt !== null && rtt <= 100) {
-                light.textContent = `[CONNECTED: LOW_LATENCY (${rtt}ms)]`;
-                light.classList.add("status-low");
-            } else {
-                light.textContent = "[CONNECTED]";
-                light.classList.add("status-low");
-            }
+            light.textContent = rtt ? `[CONNECTED: ${rtt}ms]` : "[CONNECTED]";
+            light.classList.add("status-low");
         } else {
             light.textContent = "[DISCONNECTED]";
             light.classList.add("status-offline", "blink");
@@ -157,11 +146,6 @@ $username = $_SESSION['codename'];
         if (!query) return;
         const lowerQuery = query.toLowerCase();
 
-        if (lowerQuery.startsWith("/google ")) {
-            renderExternalRedirect("GOOGLE", query.split("/google ")[1], `https://www.google.com/search?q=${encodeURIComponent(query.split("/google ")[1])}`);
-            box.value = ""; return;
-        }
-
         savedDiv.innerHTML = `
             <div class="scanning-text flicker">> ACCESSING GLOBAL NODE: ${query.toUpperCase()}</div>
             <div class="progress-container"><div id="pbar" class="progress-bar"></div></div>
@@ -191,15 +175,13 @@ $username = $_SESSION['codename'];
                     ddg: await ddgRes.json(),
                     cve: cveData
                 };
-            } catch (err) {
-                return { type: 'error', msg: err.message };
-            }
+            } catch (err) { return { type: 'error', msg: err.message }; }
         })();
 
         let progress = 0;
         const interval = setInterval(() => {
             if (progress < 90) {
-                progress += Math.random() * 5; 
+                progress += Math.random() * 10; 
                 pbar.style.width = Math.min(progress, 90) + "%";
                 matrix.innerText = Math.random().toString(16).substring(2, 60);
                 if (Math.random() > 0.7) SoundEngine.blip(80, 0.05);
@@ -218,25 +200,17 @@ $username = $_SESSION['codename'];
         } else if (result.type === 'error') {
             systemLog("> UPLINK ERROR: " + result.msg);
         } else {
-            if (!result.wiki && !result.ddg && (!result.hn.hits || result.hn.hits.length === 0)) {
-                systemLog("> NODE NOT FOUND IN GLOBAL ARCHIVES.");
-            } else {
-                renderAggressiveResults(query, result.wiki, result.hn, result.ddg, result.cve);
-            }
+            renderAggressiveResults(query, result.wiki, result.hn, result.ddg, result.cve);
         } 
     }
 
     function renderAggressiveResults(query, wiki, hn, ddg, cve) {
-        currentActiveNode = query.toLowerCase();
         let html = `<div class="wiki-entry"><h1 class="wiki-title" style="color:#00ff41; border-bottom: 2px solid #00ff41; margin-top: 0;">INTEGRATED_INTELLIGENCE: ${query.toUpperCase()}</h1>`;
-
+        
         if (wiki && wiki.extract) {
-            const entityType = detectEntityType(wiki.extract);
-            const isBio = entityType === "HUMAN_SUBJECT";
-            const themeColor = isBio ? "#ffd700" : "#00ff41";
-            html += `<div class="node-container ${isBio ? 'node-bio' : 'node-wiki'}">
-                        <p class="ZeroDay" style="color:${themeColor};">[${isBio ? 'BIO_ARCHIVE' : 'WIKI_NODE'} // ${entityType}]</p>
-                        <h2 style="color:${themeColor}; font-size:1.1rem; margin: 5px 0;">${wiki.title}</h2>
+            html += `<div class="node-container node-wiki">
+                        <p class="ZeroDay" style="color:#00ff41;">[WIKI_NODE // ARCHIVE]</p>
+                        <h2 style="color:#00ff41; font-size:1.1rem; margin: 5px 0;">${wiki.title}</h2>
                         <p class="wiki-content">${wiki.extract}</p>
                      </div>`;
         }
@@ -249,28 +223,9 @@ $username = $_SESSION['codename'];
             html += `</div>`;
         }
 
-        if (cve && cve.length > 0) {
-            html += `<div class="node-container node-cve" style="border-left: 4px solid #ff003c;">
-                        <p class="ZeroDay" style="color:#ff003c;">[THREAT_DETECTION // NIST_NVD]</p>`;
-            cve.forEach(item => {
-                const id = item.cve.id;
-                const desc = item.cve.descriptions[0].value;
-                html += `<p class="wiki-content" style="font-size:0.85rem; margin-bottom:8px;"><strong style="color:#ff003c;">${id}:</strong> ${desc.substring(0, 150)}...</p>`;
-            });
-            html += `</div>`;
-        }
-
         html += `</div>`;
         dbSave(query, html);
         typeWriter(savedDiv, html, 2);
-        if (wiki && wiki.title) displayRelated(wiki.title);
-    }
-
-    function detectEntityType(text) {
-        const t = text.toLowerCase();
-        if (t.includes("born") || t.includes("died") || t.includes("politician")) return "HUMAN_SUBJECT";
-        if (t.includes("software") || t.includes("kernel")) return "SOFTWARE";
-        return "OBJECT";
     }
 
     async function fetchVulnerabilities(query) {
@@ -297,6 +252,13 @@ $username = $_SESSION['codename'];
         });
     }
 
+    function clearMessages() {
+        if(confirm("Purge ALL vault storage?")) {
+            db.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME).clear();
+            location.reload();
+        }
+    }
+
     async function updateVaultStats() {
         if (!db) return;
         const store = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME);
@@ -320,9 +282,18 @@ $username = $_SESSION['codename'];
     }
 
     function clearDisplay() {
-        savedDiv.innerHTML = `<p class="NullPointer">> Terminal display purged. Vault remains intact.</p>`;
+        document.getElementById("savedMessages").innerHTML = `<p class="NullPointer">> Terminal display purged.</p>`;
         SoundEngine.blip(300, 0.1);
     }
+
+    function systemLog(msg) {
+        const p = document.createElement("p");
+        p.className = "ZeroDay";
+        p.textContent = msg;
+        document.getElementById("savedMessages").appendChild(p);
+    }
+
+    window.onload = () => { if(db) runIntroSequence(); };
 </script>
 </body>
 </html>
