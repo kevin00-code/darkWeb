@@ -1,4 +1,4 @@
-/* --- GLOBAL TERMINAL BASE --- */
+/* --- DARK_WIKI MASTER STYLESHEET --- */
 body {
   font-family: 'Courier New', Courier, monospace;
   color: #a0ffb9;
@@ -19,154 +19,143 @@ body {
   border-radius: 12px;
   padding: 10px;
   height: 80vh;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.15);
   display: flex;
   flex-direction: column;
   position: relative;
   box-sizing: border-box;
 }
 
-/* --- THEMES: HUMAN vs OBJECT vs THREAT --- */
-
-/* 1. HUMAN_SUBJECT (YELLOW GOLD CONCEPT) */
-.node-bio {
-    border-left: 4px solid #ffd700 !important;
-    background: rgba(255, 215, 0, 0.03);
-    margin-bottom: 15px;
-    padding: 10px;
-}
-.node-bio .wiki-title, 
-.node-bio .ZeroDay, 
-.node-bio .wiki-content {
-    color: #ffd700 !important; /* Force everything Gold for Humans */
-}
-
-/* 2. THREAT_DETECTION (ALARM RED) */
-.node-cve {
-    border-left: 4px solid #ff3e3e !important;
-    background: rgba(255, 62, 62, 0.05);
-    margin-bottom: 15px;
-    padding: 10px;
-}
-.node-cve .ZeroDay, 
-.node-cve .wiki-content {
-    color: #ff3e3e !important; /* Force everything Red for Threats */
-}
-
-/* 3. STANDARD_NODE (MATRIX GREEN) */
-.node-wiki {
-    border-left: 4px solid #00ff41;
-    margin-bottom: 15px;
-    padding: 10px;
-}
-
-/* 4. DDG */
-.node-search {
-    border-left: 4px solid #00d4ff;
-    background: rgba(0, 212, 255, 0.03);
-    margin-bottom: 15px;
-    padding: 10px;
-}
-/* --- HEADER & STATUS BAR --- */
+/* --- HEADER & STATUS --- */
 .header-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 1px solid rgba(0, 255, 65, 0.3);
-  padding-bottom: 10px;
+  width: 100%;
+}
+
+h1#welcome {
+  margin: 0;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  white-space: nowrap;
 }
 
 .status-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; 
   align-items: center;
-  padding: 5px 10px;
-  font-size: 0.8rem;
-  background: rgba(0, 255, 65, 0.05);
+  font-size: 0.65rem;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  border-top: 1px solid rgba(0, 255, 65, 0.2);
+  padding: 8px 0;
 }
 
-/* Connection Colors */
-.status-low { color: #00ff41; }      /* Green for connected */
-.status-offline { color: #ff3e3e; }  /* Red for disconnected */
-.status-low { color: #00ff41; }      /* Matrix Green */
-.status-high { color: #ffd700; }     /* Yellow Gold */
-.status-offline { color: #ff3e3e; }  /* Alarm Red */
+/* Connection Latency Colors */
+.status-low { color: #00ff41; }    /* Green < 200ms */
+.status-high { color: #ff5f1f; }   /* Orange > 200ms */
+.status-offline { color: #ff3e3e; } /* Red Disconnected */
 
-/* Blinking Red Animation */
-.blink {
-    animation: pulse-red 1s infinite;
-}
-/* --- PROGRESS & SCANNING --- */
-.progress-container {
-  width: 100%;
-  height: 4px;
-  background: #111;
-  margin: 10px 0;
-}
-.progress-bar {
-  height: 100%;
-  background: #00ff41;
-  box-shadow: 0 0 10px #00ff41;
-  transition: width 0.2s ease;
-}
+#vault-stats { font-size: 0.65rem; color: #888; }
 
-.scanning-text {
-  color: #00ff41;
-  font-weight: bold;
-  font-size: 0.9rem;
-}
-
-/* --- BUTTONS --- */
-.scrub-btn {
-  background: transparent;
+/* --- TERMINAL & NODES --- */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  padding: 20px; 
+  background: rgba(0, 5, 0, 0.9);
   border: 1px solid #00ff41;
-  color: #00ff41;
-  padding: 3px 8px;
-  font-family: 'Courier New', monospace;
-  cursor: pointer;
-  font-size: 0.75rem;
-  transition: 0.3s;
+  border-radius: 8px;
+  line-height: 1.6;
 }
-.scrub-btn:hover {
-  background: #00ff41;
-  color: #000;
+
+.wiki-title-integrated {
+    color: #00ff41;
+    border-bottom: 2px solid #00ff41;
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+}
+
+.node-container {
+    margin-bottom: 20px;
+    padding: 12px;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Node Color Schemes */
+.node-wiki { border-left: 4px solid #00ff41; background: rgba(0, 255, 65, 0.02); }
+.node-bio { border-left: 4px solid #ffd700; background: rgba(255, 215, 0, 0.05); } /* HUMAN SUBJECT GOLD */
+.node-tech { border-left: 4px solid #ff5f1f; background: rgba(255, 95, 31, 0.03); }
+.node-cve { border-left: 4px solid #ff3131; background: rgba(255, 49, 49, 0.05); }
+
+/* DDG / External Link Styling */
+.external-link-container {
+    border-left: 4px solid #00d4ff;
+    background: rgba(0, 212, 255, 0.05);
+}
+
+.external-establish-btn {
+    text-decoration: none;
+    display: inline-block;
+    padding: 8px 15px;
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 0.75rem;
+    background: rgba(0, 212, 255, 0.1);
+    transition: all 0.3s;
+}
+
+.external-establish-btn:hover {
+    background: #00d4ff;
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+}
+
+/* --- BUTTONS & INPUTS --- */
+.scrub-btn {
+  background: rgba(255, 0, 0, 0.1);
+  color: #ff4444;
+  border: 1px solid #ff4444;
+  font-size: 0.55rem;
+  padding: 2px 8px; 
+  cursor: pointer;
+  text-transform: uppercase;
 }
 
 .send-btn {
-  background: #00ff41;
-  color: #000;
-  border: none;
-  padding: 10px 20px;
-  font-weight: bold;
-  cursor: pointer;
+  background: #1e90ff; color: #fff; border: none; padding: 0 20px;
+  border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase;
 }
 
-/* --- RESPONSIVE LOGIC --- */
-@media (max-width: 700px) {
-  #vault-stats {
-    display: block;
-    line-height: 1.2;
-  }
-  
-  .header-row {
-    flex-direction: column;
-    align-items: center;
-  }
+textarea#messageBox {
+  flex: 1; resize: none; border-radius: 8px; padding: 12px;
+  border: 1px solid #333; background: #050505; color: #fff; outline: none;
 }
 
-/*BLINKIN OFFLINE*/
-@keyframes pulse-red {
-    0% { opacity: 1; text-shadow: 0 0 5px #ff3e3e; }
-    50% { opacity: 0.3; text-shadow: none; }
-    100% { opacity: 1; text-shadow: 0 0 5px #ff3e3e; }
-}
+/* --- ANIMATIONS --- */
+.ZeroDay { color: #ff5f1f; }
+.NullPointer { color: #39ff14; }
 
-/* Animations */
-@keyframes flicker {
-  0% { opacity: 0.8; }
-  50% { opacity: 1; }
-  100% { opacity: 0.8; }
-}
 .flicker { animation: flicker 0.1s infinite; }
+@keyframes flicker {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
 
-.blink { animation: blinker 1s linear infinite; }
-@keyframes blinker { 50% { opacity: 0; } }
+.blink { animation: pulse-red 1s infinite; }
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* --- MOBILE & VAULT RESIZING --- */
+@media (max-width: 700px) {
+  #vault-stats { display: block; line-height: 1.2; text-align: left; }
+  #welcome { font-size: 1rem; }
+  .chat-container { width: 100%; height: 100vh; border-radius: 0; }
+}
