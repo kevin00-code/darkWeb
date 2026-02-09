@@ -99,7 +99,6 @@ if (isset($_POST['action']) && $_POST['action'] == 'purge') {
       </div>
 
       <div class="header-right">
-          <button class="scrub-btn" onclick="selfDestruct()" style="color:#ff3131; border-color:#ff3131;">PURGE</button>
       </div>
   </div>
 
@@ -247,3 +246,4 @@ window.onload = runIntro;
 </script>
 </body>
 </html>
+
