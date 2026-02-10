@@ -26,14 +26,14 @@ body {
 }
 
 .header-controls {
-  display: flex;
+  display: flex 1;
   flex-direction: column; 
   align-items: flex-end;    
   gap: 4px;
 }
 
 .header-row {
-  display: flex;
+  display: flex 1;
   justify-content: space-between;
   align-items: flex-start; /* Keeps items at the top even if they stack */
   width: 100%;
@@ -94,7 +94,7 @@ h1#welcome {
   color: #ff4444;
   border: 1px solid #ff4444;
   font-size: 0.55rem;
-  padding: 2px 8px; 
+  padding: 2px 4px; 
   cursor: pointer;
   text-transform: uppercase;
   transition: all 0.2s ease;
@@ -329,3 +329,4 @@ textarea#messageBox {
     height: 45px;
   }
 }
+
