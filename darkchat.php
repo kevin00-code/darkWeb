@@ -217,7 +217,7 @@ async function saveMessage(e) {
 
     function renderAggressiveResults(query, wiki, hn, ddg, cve) {
         // 1. Determine if this is a PERSON to set the theme
-    const bioKeywords = ['president', 'ceo', 'businessman', 'businesswoman','musician','artist', 'actor','actress', 'activist', 'politician', 'founder','father','mother','sister','brother'];
+    const bioKeywords = ['president', 'ceo', 'businessman', 'businesswoman','musician','artist', 'actor','actress', 'activist', 'politician', 'founder','father','mother','sister','brother','wife','husband','model','first lady'];
     const isPerson = wiki && wiki.description && bioKeywords.some(word => wiki.description.toLowerCase().includes(word));
 
     // Dynamic Colors based on subject type
