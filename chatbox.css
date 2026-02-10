@@ -94,7 +94,7 @@ h1#welcome {
   color: #ff4444;
   border: 1px solid #ff4444;
   font-size: 0.55rem;
-  padding: 2px 4px; 
+  padding: 2px 2px; 
   cursor: pointer;
   text-transform: uppercase;
   transition: all 0.2s ease;
@@ -329,4 +329,5 @@ textarea#messageBox {
     height: 45px;
   }
 }
+
 
