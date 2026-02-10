@@ -94,10 +94,13 @@ h1#welcome {
   color: #ff4444;
   border: 1px solid #ff4444;
   font-size: 0.55rem;
-  padding: 2px 2px; 
+  padding: 2px 6px; 
   cursor: pointer;
   text-transform: uppercase;
   transition: all 0.2s ease;
+  width: auto;
+  display: inline-block;
+  line-height: 1;
 }
 
 .scrub-btn:hover {
@@ -334,3 +337,4 @@ textarea#messageBox {
     height: 45px;
   }
 }
+
