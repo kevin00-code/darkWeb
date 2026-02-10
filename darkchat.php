@@ -144,73 +144,76 @@ async function saveMessage(e) {
     const query = box.value.trim();
     if (!query) return;
 
-    // Secret Mobile Purge Command
-    const isMobile = window.innerWidth <= 600;
-    if (isMobile && query.toLowerCase() === '/purge') {
-        box.value = "";
-        clearMessages(); // Triggers existing purge logic
-        return;
-    }
-
     const lowerQuery = query.toLowerCase();
 
-        savedDiv.innerHTML = `
-            <div class="scanning-text flicker">> ACCESSING GLOBAL NODE: ${query.toUpperCase()}</div>
-            <div class="progress-container"><div id="pbar" class="progress-bar"></div></div>
-            <div id="matrix" class="matrix-loader"></div>
-        `;
+    savedDiv.innerHTML = `
+        <div class="scanning-text flicker">> ACCESSING GLOBAL NODE: ${query.toUpperCase()}</div>
+        <div class="progress-container"><div id="pbar" class="progress-bar"></div></div>
+        <div id="matrix" class="matrix-loader"></div>
+    `;
 
-        const pbar = document.getElementById("pbar");
-        const matrix = document.getElementById("matrix");
+    const pbar = document.getElementById("pbar");
+    const matrix = document.getElementById("matrix");
 
-        const dataPromise = (async () => {
-            const cached = await dbGet(lowerQuery);
-            if (cached) return { type: 'cache', data: cached.html };
-            try {
-                const suggestRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&namespace=0&format=json&origin=*`);
-                const suggestData = await suggestRes.json();
-                const searchTitle = (suggestData[1] && suggestData[1].length > 0) ? suggestData[1][0] : query;
-                const [wikiRes, hnRes, ddgRes, cveData] = await Promise.all([
-                    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTitle)}?origin=*`),
-                    fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&tags=story`),
-                    fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&origin=*`),
-                    fetchVulnerabilities(query)
-                ]);
-                return {
-                    type: 'fresh',
-                    wiki: wikiRes.ok ? await wikiRes.json() : null,
-                    hn: await hnRes.json(),
-                    ddg: await ddgRes.json(),
-                    cve: cveData
-                };
-            } catch (err) { return { type: 'error', msg: err.message }; }
-        })();
+    // --- START OF REPLACEMENT ---
+    const dataPromise = (async () => {
+        const cached = await dbGet(lowerQuery);
+        if (cached) return { type: 'cache', data: cached.html };
+        
+        try {
+            // Get Wikipedia title suggestion first
+            const suggestRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&namespace=0&format=json&origin=*`).catch(() => null);
+            const suggestData = suggestRes ? await suggestRes.json() : [];
+            const searchTitle = (suggestData && suggestData[1] && suggestData[1].length > 0) ? suggestData[1][0] : query;
 
-        let progress = 0;
-        const interval = setInterval(() => {
-            if (progress < 90) {
-                progress += Math.random() * 10; 
-                pbar.style.width = Math.min(progress, 90) + "%";
-                matrix.innerText = Math.random().toString(16).substring(2, 60);
-                if (Math.random() > 0.7) SoundEngine.blip(80, 0.05);
-            }
-        }, 100);
+            // Fetch everything in parallel with individual safety nets
+            const [wikiRes, hnData, ddgData, cveData] = await Promise.all([
+                fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTitle)}?origin=*`)
+                    .then(res => res.ok ? res.json() : null).catch(() => null),
+                fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&tags=story`)
+                    .then(res => res.json()).catch(() => ({ hits: [] })),
+                fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&origin=*`)
+                    .then(res => res.json()).catch(() => ({ RelatedTopics: [] })),
+                fetchVulnerabilities(query).catch(() => [])
+            ]);
 
-        const result = await dataPromise;
-        clearInterval(interval);
-        pbar.style.width = "100%";
-        SoundEngine.blip(200, 0.2);
-        await new Promise(r => setTimeout(r, 300));
+            return {
+                type: 'fresh',
+                wiki: wikiRes,
+                hn: hnData,
+                ddg: ddgData,
+                cve: cveData
+            };
+        } catch (err) { 
+            return { type: 'error', msg: "UPLINK_TIMEOUT: " + err.message }; 
+        }
+    })();
+    // --- END OF REPLACEMENT ---
 
-        box.value = "";
-        if (result.type === 'cache') {
-            typeWriter(savedDiv, result.data, 2);
-        } else if (result.type === 'error') {
-            systemLog("> UPLINK ERROR: " + result.msg);
-        } else {
-            renderAggressiveResults(query, result.wiki, result.hn, result.ddg, result.cve);
-        } 
+    let progress = 0;
+    const interval = setInterval(() => {
+        if (progress < 90) {
+            progress += Math.random() * 10; 
+            pbar.style.width = Math.min(progress, 90) + "%";
+            matrix.innerText = Math.random().toString(16).substring(2, 60);
+            if (Math.random() > 0.7) SoundEngine.blip(80, 0.05);
+        }
+    }, 100);
+
+    const result = await dataPromise;
+    clearInterval(interval);
+    pbar.style.width = "100%";
+    
+    // Final rendering logic...
+    if (result.type === 'cache') {
+        typeWriter(savedDiv, result.data, 2);
+    } else if (result.type === 'error') {
+        systemLog("> " + result.msg);
+    } else {
+        renderAggressiveResults(query, result.wiki, result.hn, result.ddg, result.cve);
     }
+    box.value = "";
+}
 
     function renderAggressiveResults(query, wiki, hn, ddg, cve) {
         let html = `<div class="wiki-entry"><h1 class="wiki-title" style="color:#00ff41; border-bottom: 2px solid #00ff41; margin-top: 0;">INTEGRATED_INTELLIGENCE: ${query.toUpperCase()}</h1>`;
@@ -352,6 +355,7 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
+
 
 
 
