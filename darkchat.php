@@ -353,5 +353,3 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
-
-
