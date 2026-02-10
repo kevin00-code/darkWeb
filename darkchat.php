@@ -1,9 +1,4 @@
-
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-// Check if auth_check.php exists before requiring
 if (file_exists('auth_check.php')) {
     require_once 'auth_check.php';
 }
@@ -362,4 +357,5 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
+
 
