@@ -216,15 +216,23 @@ async function saveMessage(e) {
 }
 
     function renderAggressiveResults(query, wiki, hn, ddg, cve) {
+        // 1. Determine if this is a PERSON to set the theme
+    const bioKeywords = ['president', 'ceo', 'businessman', 'businesswoman','musician','artist', 'actor','actress', 'activist', 'politician', 'founder','father','mother','sister','brother'];
+    const isPerson = wiki && wiki.description && bioKeywords.some(word => wiki.description.toLowerCase().includes(word));
+
+    // Dynamic Colors based on subject type
+    const titleColor = isPerson ? "#ffd700" : "#00ff41"; // Gold for person, Green for others
+    const nodeClass = isPerson ? "node-container node-bio" : "node-container node-wiki";
+
         let html = `<div class="wiki-entry"><h1 class="wiki-title" style="color:#00ff41; border-bottom: 2px solid #00ff41; margin-top: 0;">INTEGRATED_INTELLIGENCE: ${query.toUpperCase()}</h1>`;
         // 1. WIKIPEDIA NODE
         if (wiki && wiki.extract) {
-            html += `<div class="node-container node-wiki">
-                        <p class="ZeroDay" style="color:#00ff41;">[WIKI_NODE // ARCHIVE]</p>
-                        <h2 style="color:#00ff41; font-size:1.1rem; margin: 5px 0;">${wiki.title}</h2>
-                        <p class="wiki-content">${wiki.extract}</p>
-                     </div>`;
-        }
+        html += `<div class="${nodeClass}">
+                    <p class="ZeroDay" style="color:${titleColor};">[${isPerson ? 'PERSON_ARCHIVE' : 'WIKI_NODE'} // SOURCE_V1]</p>
+                    <h2 style="color:${titleColor}; font-size:1.1rem; margin: 5px 0;">${wiki.title}</h2>
+                    <p class="wiki-content" style="color:${contentColor};">${wiki.extract}</p>
+                 </div>`;
+          }
         // 2. DDG
         if (ddg && ddg.RelatedTopics) {
         const onionUrl = "https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion/?q=" + encodeURIComponent(query);
@@ -353,4 +361,3 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
-
