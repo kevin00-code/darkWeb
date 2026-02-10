@@ -217,13 +217,14 @@ async function saveMessage(e) {
 
     function renderAggressiveResults(query, wiki, hn, ddg, cve) {
         // 1. Determine if this is a PERSON to set the theme
-    const bioKeywords = ['president', 'ceo', 'businessman', 'businesswoman','musician','artist', 'actor','actress', 'activist', 'politician', 'founder','father','mother','sister','brother','wife','husband','model','first lady','criminal'];
+    const bioKeywords = ['president', 'ceo', 'businessman', 'businesswoman','musician','artist', 'actor','actress', 'activist', 'politician', 'founder','father','mother','sister','brother','wife','husband','model','first lady'];
     const isPerson = wiki && wiki.description && bioKeywords.some(word => wiki.description.toLowerCase().includes(word));
 
     // Dynamic Colors based on subject type
     const titleColor = isPerson ? "#ffd700" : "#00ff41"; // Gold for person, Green for others
+    const contentColor = "#ffffff";
     const nodeClass = isPerson ? "node-container node-bio" : "node-container node-wiki";
-
+    
         let html = `<div class="wiki-entry"><h1 class="wiki-title" style="color:#00ff41; border-bottom: 2px solid #00ff41; margin-top: 0;">INTEGRATED_INTELLIGENCE: ${query.toUpperCase()}</h1>`;
         // 1. WIKIPEDIA NODE
         if (wiki && wiki.extract) {
@@ -361,4 +362,3 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
-
