@@ -1,3 +1,4 @@
+
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -107,19 +108,25 @@ $username = $_SESSION['codename'];
         if(document.readyState === "complete") runIntroSequence(); 
     };
 
-    function updateOnlineStatus() {
-        const light = document.getElementById("connection-light");
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        const rtt = connection ? connection.rtt : null;
-        light.className = "";
-        if (navigator.onLine) {
-            light.textContent = rtt ? `[CONNECTED: ${rtt}ms]` : "[CONNECTED]";
-            light.classList.add("status-low");
+ffunction updateOnlineStatus() {
+    const light = document.getElementById("connection-light");
+    // Check if the connection object exists (Chrome/Android support)
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    
+    if (navigator.onLine) {
+        light.className = "status-low";
+        if (conn.rtt > 300) 
+            { light.className = "status-high"; }
+        if (conn && conn.rtt) {
+            light.textContent = `[ONLINE // LATENCY: ${conn.rtt}ms]`;
         } else {
-            light.textContent = "[DISCONNECTED]";
-            light.classList.add("status-offline", "blink");
+            light.textContent = "[ONLINE // UPLINK_STABLE]";
         }
+    } else {
+        light.textContent = "[OFFLINE // CONNECTION_LOST]";
+        light.className = "status-offline blink";
     }
+}
     setInterval(updateOnlineStatus, 2000);
 
     function runIntroSequence() {
@@ -141,12 +148,21 @@ $username = $_SESSION['codename'];
         });
     }
 
-    async function saveMessage(e) {
-        if (e) e.preventDefault();
-        const box = document.getElementById("messageBox");
-        const query = box.value.trim();
-        if (!query) return;
-        const lowerQuery = query.toLowerCase();
+async function saveMessage(e) {
+    if (e) e.preventDefault();
+    const box = document.getElementById("messageBox");
+    const query = box.value.trim();
+    if (!query) return;
+
+    // Secret Mobile Purge Command
+    const isMobile = window.innerWidth <= 600;
+    if (isMobile && query.toLowerCase() === '/purge') {
+        box.value = "";
+        clearMessages(); // Triggers existing purge logic
+        return;
+    }
+
+    const lowerQuery = query.toLowerCase();
 
         savedDiv.innerHTML = `
             <div class="scanning-text flicker">> ACCESSING GLOBAL NODE: ${query.toUpperCase()}</div>
@@ -208,7 +224,7 @@ $username = $_SESSION['codename'];
 
     function renderAggressiveResults(query, wiki, hn, ddg, cve) {
         let html = `<div class="wiki-entry"><h1 class="wiki-title" style="color:#00ff41; border-bottom: 2px solid #00ff41; margin-top: 0;">INTEGRATED_INTELLIGENCE: ${query.toUpperCase()}</h1>`;
-        
+        // 1. WIKIPEDIA NODE
         if (wiki && wiki.extract) {
             html += `<div class="node-container node-wiki">
                         <p class="ZeroDay" style="color:#00ff41;">[WIKI_NODE // ARCHIVE]</p>
@@ -216,27 +232,58 @@ $username = $_SESSION['codename'];
                         <p class="wiki-content">${wiki.extract}</p>
                      </div>`;
         }
-
-        if (hn.hits && hn.hits.length > 0) {
-            html += `<div class="node-container node-tech"><p class="ZeroDay" style="color:#ff5f1f;">[TECH_LOGS // HACKER_NEWS]</p>`;
-            hn.hits.slice(0, 5).forEach(hit => {
-                html += `<p class="wiki-content" style="margin-bottom:5px;">▸ <a href="${hit.url}" target="_blank" class="hn-link">${hit.title}</a></p>`;
-            });
-            html += `</div>`;
+        // 2. DDG
+        if (ddg && ddg.RelatedTopics) {
+        const onionUrl = "https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion/?q=" + encodeURIComponent(query);
+        html += `<div class="node-container">
+                    <p style="color:#00d4ff;">[NET_RECON // DUCKDUCKGO]</p>
+                    <a href="${onionUrl}" target="_blank" style="color:#d400ff; font-weight:bold; text-decoration:none;">>>> ESTABLISH TOR UPLINK (HIDDEN_WIKI_GATEWAY)</a>`;
+        
+        ddg.RelatedTopics.slice(0, 5).forEach(topic => { // LIMIT: 5
+            if (topic.Text) html += `<p class="wiki-content" style="color:#00d4ff;">▸ ${topic.Text.substring(0,100)}...</p>`;
+        });
+        html += `</div>`;
         }
 
+    // 3. HACKER NEWS NODE 
+        if (hn.hits && hn.hits.length > 0) {
+        html += `<div class="node-container node-tech"><p class="ZeroDay" style="color:#ff5f1f;">[TECH_LOGS // HACKER_NEWS]</p>`;
+        hn.hits.slice(0, 5).forEach(hit => {
+            html += `<p class="wiki-content" style="margin-bottom:5px;">▸ <a href="${hit.url}" target="_blank" class="hn-link">${hit.title}</a></p>`;
+        });
         html += `</div>`;
-        dbSave(query, html);
-        typeWriter(savedDiv, html, 2);
     }
 
-    async function fetchVulnerabilities(query) {
-        try {
-            const res = await fetch(`https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${encodeURIComponent(query)}`);
-            const data = await res.json();
-            return data.vulnerabilities.slice(0, 3);
-        } catch (e) { return null; }
+    // 4. CVE VULNERABILITY NODE
+         if (cve && cve.length > 0) {
+        html += `<div class="node-container node-cve" style="border-left: 4px solid #ff3e3e; background: rgba(255, 62, 62, 0.05); padding: 10px;">
+                    <p class="ZeroDay" style="color:#ff3e3e;">[VULNERABILITY_DB // NIST_NVD]</p>`;
+        
+        cve.forEach(item => {
+            const cveId = item.cve.id;
+            const descObj = item.cve.descriptions.find(d => d.lang === 'en');
+            const desc = descObj ? descObj.value : "No description available.";
+            
+            html += `<div style="margin-bottom: 12px; border-bottom: 1px dashed #ff3e3e; padding-bottom: 5px;">
+                        <span class="cve-id" style="color:#ff3e3e; font-weight:bold; display:block;">⚠ ${cveId}</span>
+                        <p class="wiki-content" style="font-size: 0.8rem; color:#ffa0a0; margin: 2px 0;">${desc.substring(0, 200)}...</p>
+                     </div>`;
+        });
+        html += `</div>`;
     }
+
+    html += `</div>`;
+    dbSave(query, html);
+    typeWriter(savedDiv, html, 2);
+}
+
+async function fetchVulnerabilities(query) {
+    try {
+        const res = await fetch(`https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        return data.vulnerabilities.slice(0, 5);
+    } catch (e) { return null; }
+}
 
     async function dbSave(query, html) {
         if (!db) return;
@@ -270,18 +317,34 @@ $username = $_SESSION['codename'];
         };
     }
 
-    function typeWriter(element, html, speed = 10) {
-        let i = 0; element.innerHTML = "";
-        function type() {
-            if (i < html.length) {
-                if (html.charAt(i) === '<') i = html.indexOf('>', i) + 1;
-                else { i++; SoundEngine.typeClick(); }
-                element.innerHTML = html.substring(0, i);
-                setTimeout(type, speed);
+function typeWriter(element, html, speed = 10) {
+    let i = 0;
+    element.innerHTML = "";
+    
+    // Detect mobile for dynamic speed
+    const isMobile = window.innerWidth <= 600;
+    const finalSpeed = isMobile ? 2 : speed; // Much faster on mobile
+
+    function type() {
+        if (i < html.length) {
+            // Handle HTML tags so they don't "leak" into the typewriter effect
+            if (html.charAt(i) === '<') {
+                i = html.indexOf('>', i) + 1;
+            } else {
+                i++;
+                // Sound only on desktop to prevent mobile audio lag
+                if (!isMobile) SoundEngine.typeClick(); 
             }
+            element.innerHTML = html.substring(0, i);
+            
+            // Auto-scroll as text types to keep latest line in view
+            element.scrollTop = element.scrollHeight;
+            
+            setTimeout(type, finalSpeed);
         }
-        type();
     }
+    type();
+}
 
     function clearDisplay() {
         document.getElementById("savedMessages").innerHTML = `<p class="NullPointer">> Terminal display purged.</p>`;
