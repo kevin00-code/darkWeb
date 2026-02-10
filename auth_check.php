@@ -10,6 +10,3 @@ function verify_access() {
         exit();
     }
 }
-?>
-
-
