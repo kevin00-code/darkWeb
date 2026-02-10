@@ -99,9 +99,8 @@ $username = $_SESSION['codename'];
         if(document.readyState === "complete") runIntroSequence(); 
     };
 
-ffunction updateOnlineStatus() {
+function updateOnlineStatus() {
     const light = document.getElementById("connection-light");
-    // Check if the connection object exists (Chrome/Android support)
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     
     if (navigator.onLine) {
@@ -353,6 +352,7 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
+
 
 
 
