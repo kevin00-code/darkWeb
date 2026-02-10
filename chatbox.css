@@ -221,7 +221,12 @@ textarea#messageBox {
 .node-bio { border-left: 4px solid #ffd700; background: rgba(255, 215, 0, 0.05); }
 .node-search { border-left: 2px solid #00d4ff; background: rgba(0, 212, 255, 0.03); }
 .node-tech { border-left: 2px solid #ff5f1f; background: rgba(255, 95, 31, 0.03); }
-
+.node-container a {
+    cursor: pointer !important;
+}
+.node-container a:hover {
+    text-shadow: 0 0 5px currentColor;
+}
 .drilldown-area {
     margin-top: 15px; 
     border-top: 1px dashed #333; 
@@ -329,5 +334,6 @@ textarea#messageBox {
     height: 45px;
   }
 }
+
 
 
