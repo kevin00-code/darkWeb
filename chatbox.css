@@ -65,13 +65,16 @@ h1#welcome {
   width: 100%;
   border-top: 1px solid rgba(0, 255, 65, 0.2);
   padding: 8px 0;
+  min-height: 25px;
+  flex-shrink: 0;
 }
 .status-bar > div:first-child {
   flex: 1;
   text-align: left;
 }
-.status-bar > div:last-child {
+.status-bar > *:last-child {
   flex: 1;
+  text-align: right;
 }
 
 #connection-light { color: #00ff41; }
@@ -263,114 +266,66 @@ textarea#messageBox {
   cursor: pointer;
   text-transform: uppercase;
 }
+ 
+.header-row, .status-bar, .input-area {
+    flex-shrink: 0;}
 
 @media (max-width: 600px) {
-  .chat-container { width: 100%; height: 100vh; border-radius: 0; padding: 15px; }
-  .input-area { flex-direction: column; }
-  .send-btn { width: 100%; }
-}
-/* SCANNING ANIMATIONS */
-.scanning-text {
-  color: #00ff41;
-  font-weight: bold;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.progress-container {
-  width: 100%;
-  height: 10px;
-  background: #111;
-  border: 1px solid #00ff41;
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-}
-
-.progress-bar {
-  width: 0%;
-  height: 100%;
-  background: #00ff41;
-  box-shadow: 0 0 10px #00ff41;
-  transition: width 0.1s linear;
-}
-
-.matrix-loader {
-  font-family: 'Courier New', monospace;
-  font-size: 0.8rem;
-  color: #003300;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-@keyframes flicker {
-  0% { opacity: 0.8; }
-  50% { opacity: 1; }
-  100% { opacity: 0.8; }
-}
-
-.wiki-title-integrated {
-    color: #00ff41;
-    border-bottom: 2px solid #00ff41;
-}
-
-.node-label-blue { color: #00d4ff; }
-.node-label-orange { color: #ff5f1f; }
-
-.external-link-container {
-    border-left: 4px solid #00ff41;
-    padding-left: 15px;
-}
-
-.external-establish-btn {
-    text-decoration: none;
-    display: inline-block;
-    padding-top: 10px;
-}
-
-/* Animation for when a node is loaded */
-@keyframes flicker {
-  0% { opacity: 0.8; }
-  50% { opacity: 1; }
-  100% { opacity: 0.8; }
-}
-.flicker { animation: flicker 0.1s infinite; }
-
-.ZeroDay { color: #ff5f1f; }
-.NullPointer { color: #39ff14; }
-
-#welcome {
-  white-space: nowrap; /* Prevents title from wrapping and pushing stats */
-}
-
-/* Mobile-specific adjustments */
-@media (max-width: 600px) {
-  #vault-stats {
-    display: block; /* Allows the <br> from JS to work effectively */
-    text-align: left;
-    line-height: 1.1; /* Keeps the two lines close together */
+  body {
+    height: 100%; /* Changed from auto to allow better container sizing */
+    overflow: hidden; /* Container will handle internal scrolling */
+    display: block; 
+    padding: 0;
   }
-  
+
+  .chat-container {
+    width: 100%;
+    height: 100vh; /* Fill the screen completely */
+    border-radius: 0;
+    border: none;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+
+.delete-btn {
+    display: none !important; /* Disables the button entirely on mobile */
+  }
+
+  .header-row {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
   #welcome {
-    font-size: 1.1rem; /* Shrinks title slightly to avoid overlap */
+    font-size: 1.2rem;
+    white-space: normal;
+    letter-spacing: 1px;
   }
 
-}
-.node-cve { 
-  border-left: 4px solid #ff3e3e; 
-  background: rgba(255, 62, 62, 0.05); 
-}
-.cve-id { color: #ff3e3e; font-weight: bold; }
+  #vault-stats {
+    font-size: 0.6rem;
+    margin-bottom: 5px;
+  }
 
-.glitch {
-  animation: glitch-anim 0.2s linear infinite;
-}
+  .status-bar {
+    font-size: 0.6rem;
+    padding: 4px 0;
+  }
 
-@keyframes glitch-anim {
-  0% { transform: translate(0); }
-  20% { transform: translate(-2px, 2px); }
-  40% { transform: translate(-2px, -2px); text-shadow: 2px 0 red; }
-  60% { transform: translate(2px, 2px); text-shadow: -2px 0 blue; }
-  80% { transform: translate(2px, -2px); }
-  100% { transform: translate(0); }
+  .messages {
+    padding: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+  }
+
+  .input-area {
+    margin-bottom: 5px; /* Space for the bottom of the screen */
+  }
+
+  textarea#messageBox {
+    font-size: 16px; /* Prevents iPhone zoom */
+    height: 45px;
+  }
 }
