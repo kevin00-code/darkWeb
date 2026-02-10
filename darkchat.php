@@ -1,11 +1,7 @@
 <?php
 if (file_exists('auth_check.php')) {
     require_once 'auth_check.php';
-}
-
-if (!isset($_SESSION['codename'])) {
-    header("Location: index.php");
-    exit();
+    verify_access(); 
 }
 $username = $_SESSION['codename'];
 ?>
@@ -357,5 +353,6 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
+
 
 
