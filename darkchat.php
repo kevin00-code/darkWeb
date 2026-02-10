@@ -256,7 +256,7 @@ async function saveMessage(e) {
             const cveId = item.cve.id;
             const descObj = item.cve.descriptions.find(d => d.lang === 'en');
             const desc = descObj ? descObj.value : "No description available.";
-            
+            const nvdUrl = `https://nvd.nist.gov/vuln/detail/${cveId}`;
             html += `<div style="margin-bottom: 12px; border-bottom: 1px dashed #ff3e3e; padding-bottom: 5px;">
                         <span class="cve-id" style="color:#ff3e3e; font-weight:bold; display:block;">⚠ ${cveId}</span>
                         <p class="wiki-content" style="font-size: 0.8rem; color:#ffa0a0; margin: 2px 0;">${desc.substring(0, 200)}...</p>
@@ -329,10 +329,6 @@ function typeWriter(element, html, speed = 10) {
                 if (!isMobile) SoundEngine.typeClick(); 
             }
             element.innerHTML = html.substring(0, i);
-            
-            // Auto-scroll as text types to keep latest line in view
-            element.scrollTop = element.scrollHeight;
-            
             setTimeout(type, finalSpeed);
         }
     }
@@ -355,8 +351,3 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
-
-
-
-
-
