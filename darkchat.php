@@ -20,7 +20,7 @@ $username = $_SESSION['codename'];
 <div class="chat-container">
   <div class="header-row">
       <div class="header-left">
-          <div id="vault-stats" class="ZeroDay">VAULT_ENTRIES: 0 NODES ARCHIVED</div>
+          <div id="vault-stats" class="ZeroDay">VAULT_ENTRIES: 0 SAVED</div>
       </div>
       <div class="header-center">
           <h1 id="welcome">USER // <?php echo strtoupper($username); ?></h1>
@@ -110,10 +110,10 @@ function updateOnlineStatus() {
         if (conn && conn.rtt) {
             light.textContent = `[ONLINE // LATENCY: ${conn.rtt}ms]`;
         } else {
-            light.textContent = "[ONLINE // UPLINK_STABLE]";
+            light.textContent = "[ONLINE // STABLE]";
         }
     } else {
-        light.textContent = "[OFFLINE // CONNECTION_LOST]";
+        light.textContent = "[OFFLINE]";
         light.className = "status-offline blink";
     }
 }
@@ -353,3 +353,4 @@ function typeWriter(element, html, speed = 10) {
 </script>
 </body>
 </html>
+
