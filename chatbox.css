@@ -1,4 +1,4 @@
-/* --- GLOBAL THEME & CONTAINER --- */
+/* global sytle*/
 body {
   font-family: 'Courier New', Courier, monospace;
   color: #a0ffb9;
@@ -26,7 +26,7 @@ body {
   box-sizing: border-box;
 }
 
-/* --- MESSAGES AREA --- */
+/* MESSAGES AREA */
 .messages {
   flex: 1;
   overflow-y: auto;
@@ -46,17 +46,15 @@ body {
     border-radius: 4px;
 }
 
-/* --- HEADER ALIGNMENT --- */
+/* HEADER ALIGNMENT */
 .header-row {
   display: flex;
-  justify-content: space-between; /* Pushes left, center, and right apart */
+  justify-content: space-between;
   align-items: center;
   width: 100%;
   padding: 0 10px;
   box-sizing: border-box;
 }
-
-/* Give the left and right sides equal width so center is balanced */
 .header-left, .header-right {
   flex: 1; 
   display: flex;
@@ -64,11 +62,11 @@ body {
 }
 
 .header-right {
-  justify-content: flex-end; /* Align kebab menu to the far right */
+  justify-content: flex-end;
 }
 
 .header-center {
-  flex: 2; /* Gives more room to the username */
+  flex: 2;
   text-align: center;
   display: flex;
   justify-content: center;
@@ -98,8 +96,7 @@ h1#welcome {
 .status-high { color: orange; }
 .status-offline { color: #ff3131; }
 
-/* --- INTEL NODES --- */
-/* Enhanced Onion Node Styling */
+/* INTEL NODES*/
  .block.onion-border {
     border-left: 4px solid #df00ff;
     background: rgba(223, 0, 255, 0.03);
@@ -172,7 +169,7 @@ h1#welcome {
     border: 1px solid #00d4ff;
 }
 
-/* --- INPUT AREA --- */
+/* INPUT AREA */
 .input-area { display: flex; gap: 10px; }
 
 textarea#messageBox {
