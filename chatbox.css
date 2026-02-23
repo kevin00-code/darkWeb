@@ -1,3 +1,4 @@
+/* --- GLOBAL THEME & CONTAINER --- */
 body {
   font-family: 'Courier New', Courier, monospace;
   color: #a0ffb9;
@@ -16,8 +17,8 @@ body {
   background: rgba(10, 10, 10, 0.95);
   border: 1px solid #00ff41; 
   border-radius: 12px;
-  padding: 10px;
-  height: 80vh;
+  padding: 5px;
+  height: 90vh;
   box-shadow: 0 0 20px rgba(0, 255, 65, 0.15);
   display: flex;
   flex-direction: column;
@@ -25,33 +26,62 @@ body {
   box-sizing: border-box;
 }
 
-.header-controls {
-  display: flex 1;
-  flex-direction: column; 
-  align-items: flex-end;    
-  gap: 4px;
+/* --- MESSAGES AREA --- */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: rgba(0, 5, 0, 0.9);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  line-height: 1.6;
+  
 }
 
+.messages::-webkit-scrollbar { width: 6px; background: #00ff41;}
+.messages::-webkit-scrollbar-thumb {
+    background: #00ff41;
+    border-radius: 4px;
+}
+
+/* --- HEADER ALIGNMENT --- */
 .header-row {
-  display: flex 1;
-  justify-content: space-between;
-  align-items: flex-start; /* Keeps items at the top even if they stack */
+  display: flex;
+  justify-content: space-between; /* Pushes left, center, and right apart */
+  align-items: center;
   width: 100%;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 
-.header-left, .header-right { flex: 1; min-width: 100px; }
-.header-center { flex: 2; text-align: center; }
-.header-left { text-align: left; }
-.header-right { text-align: right; }
+/* Give the left and right sides equal width so center is balanced */
+.header-left, .header-right {
+  flex: 1; 
+  display: flex;
+  align-items: center;
+}
+
+.header-right {
+  justify-content: flex-end; /* Align kebab menu to the far right */
+}
+
+.header-center {
+  flex: 2; /* Gives more room to the username */
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
 
 h1#welcome {
-  margin: 0;
+  margin: 2px 0;
+  white-space: nowrap;
   color: #ffd700;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   text-transform: uppercase;
   letter-spacing: 3px;
-  white-space: nowrap;
 }
 
 .status-bar {
@@ -60,33 +90,380 @@ h1#welcome {
   align-items: center;
   font-family: monospace;
   font-size: 0.65rem;
-  margin-top: 5px;
-  margin-bottom: 10;
-  width: 100%;
-  border-top: 1px solid rgba(0, 255, 65, 0.2);
   padding: 8px 0;
-  min-height: 25px;
-  flex-shrink: 0;
-}
-.status-bar > div:first-child {
-  flex: 1;
-  text-align: left;
-}
-.status-bar > *:last-child {
-  flex: 1;
-  text-align: right;
+  border-top: 1px solid rgba(0, 255, 65, 0.2);
 }
 
-#connection-light { color: #00ff41; }
-.status-low { color: #00ff41; }
-.status-high { color: #ffd700; }
-.status-offline { color: #ff3e3e; }
+.status-low { color: #00ff88; }
+.status-high { color: orange; }
+.status-offline { color: #ff3131; }
 
-#vault-stats {
-  font-size: 0.65rem;
-  color: #888;
-  margin: 0;
-  white-space: nowrap;
+/* --- INTEL NODES --- */
+/* Enhanced Onion Node Styling */
+ .block.onion-border {
+    border-left: 4px solid #df00ff;
+    background: rgba(223, 0, 255, 0.03);
+    box-shadow: inset 0 0 15px rgba(223, 0, 255, 0.05);
+}
+
+.onion-item {
+    padding: 10px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(223, 0, 255, 0.1);
+    background: rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.onion-item:hover {
+    border-color: #df00ff;
+    background: rgba(223, 0, 255, 0.08);
+}
+
+.onion-link-text {
+    color: #df00ff !important;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    word-break: break-all;
+    display: block;
+    margin-bottom: 5px;
+    text-shadow: 0 0 5px rgba(223, 0, 255, 0.5);
+}
+
+.onion-desc {
+    color: #aaa !important;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.wiki-border { border-color: #00d4ff; }
+.label-wiki { color: #00d4ff; border: 1px solid #00d4ff; }
+.news-border { border-color: #ff5f1f; }
+.label-news { color: #ff5f1f; border: 1px solid #ff5f1f; }
+.onion-border { border-color: #df00ff; }
+.label-onion { color: #df00ff; border: 1px solid #df00ff; }
+
+.gold-text {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.ddg-text {
+    color: #00d4ff !important;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+}
+.ddg-border .feed-item {
+    color: #00d4ff !important;
+    border-left: 1px solid rgba(0, 212, 255, 0.3);
+}
+.ddg-border .node-content div:last-child {
+    margin-bottom: 0;
+}
+.relevance-strike {
+    margin-top: 8px;
+    display: block;
+}
+
+.label-ddg { color: #de5833; border: 1px solid #de5833; }
+
+.label-ddg {
+    color: #00d4ff;
+    border: 1px solid #00d4ff;
+}
+
+/* --- INPUT AREA --- */
+.input-area { display: flex; gap: 10px; }
+
+textarea#messageBox {
+  flex: 1;
+  resize: none;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #333;
+  background: #050505;
+  color: #fff;
+  outline: none;
+  font-family: inherit;
+}
+
+.send-btn {
+  background: #1e90ff;
+  color: #fff;
+  border: none;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* --- ANIMATIONS --- */
+.binary-stream {
+    font-family: 'Courier New', monospace;
+    color: rgba(0, 255, 65, 0.4); /* Dim green binary */
+    font-size: 0.9rem;
+    letter-spacing: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    margin: 10px 0;
+    text-shadow: 0 0 5px #00ff41;
+    animation: pulse 1.5s infinite;
+}
+
+.scanning-text {
+    background: #00ff41;
+    color: #000;
+    font-weight: bold;
+    padding: 5px 15px;
+    display: inline-block;
+    font-family: monospace;
+    text-transform: uppercase;
+    animation: blink-fast 0.1s infinite alternate;
+}
+
+.system-error {
+    color: #ff3131 !important;
+    animation: blink-red 1s infinite;
+}
+
+@keyframes blink-red {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes blink-fast {
+    from { opacity: 1; }
+    to { opacity: 0.8; }
+}
+
+.blink { animation: pulse-red 1s infinite; }
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* --- KEBAB (THREE-DOT) MENU --- */
+.kebab-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    padding: 5px;
+    z-index: 3001;
+    position: relative;
+    width: 20px;
+    align-items: center;
+    gap: 3px;
+}
+
+.kebab-btn span {
+    width: 5px;
+    height: 5px;
+    background-color: #ffd700;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+.kebab-btn:hover span {
+    background-color: #fff;
+    box-shadow: 0 0 10px #fff;
+}
+
+/* --- DYNAMIC CONTENT CLASSES --- */
+.progress-container {
+    border: 1px solid #00ff41;
+    height: 10px;
+    margin: 10px 0;
+    background: rgba(0, 0, 0, 0.5);
+    width: 100%;
+}
+
+.progress-bar {
+    background: #00ff41;
+    height: 100%;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+#menu-toggle {
+    display: none;
+}
+
+.side-menu-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+}
+
+/* SIDE MENU */
+.side-menu-content {
+  position: fixed;
+  top: 0;
+  right: -280px; 
+  width: 260px;
+  height: 100vh;
+  background: rgba(10, 10, 10, 0.98);
+  border-left: 2px solid #00ff41;
+  transition: 0.4s ease-in-out;
+  z-index: 3000;
+  padding: 60px 20px;
+}
+
+#menu-toggle:checked ~ .side-menu-content { right: 0; }
+
+.menu-link {
+  display: block;
+  color: #fff;
+  text-decoration: none;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  font-size: 0.8rem;
+}
+
+.menu-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.5);
+  visibility: hidden;
+  opacity: 0;
+  z-index: 2999;
+}
+#menu-toggle:checked ~ .menu-overlay { visibility: visible; opacity: 1; }
+ 
+/* Container for the search report */
+.intel-report {
+    margin-top: 20px;
+    font-family: 'Courier New', monospace;
+}
+
+.report-header {
+    color: #39ff14;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
+}
+
+/* Content Styles */
+.node-title { color: #00d4ff; margin: 0 0 10px 0; }
+.feed-item { margin-bottom: 8px; }
+.feed-link { color: #a0ffb9; text-decoration: none; font-size: 0.9rem; }
+.feed-link:hover { color: #39ff14; text-decoration: underline; }
+.onion-link-text { color: #df00ff; font-weight: bold; word-break: break-all; }
+.node-content-human { color: #fff !important; }
+.node-title-human { color: #ffd700 !important; }
+.onion-desc, .feed-item {
+    color: #6200ff;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    border-left: 1px solid #333;
+    padding-left: 10px;
+}
+
+.node-onion { 
+    border-left: 4px solid #df00ff !important; 
+    background: rgba(223, 0, 255, 0.05) !important;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+.onion-link-text { 
+    color: #df00ff !important; 
+    font-weight: bold; 
+    text-decoration: underline;
+}
+
+/* --- CVE / NIST VULNERABILITY STYLING --- */
+.node-cve {
+    border-left: 4px solid #ff3131 !important;
+    background: rgba(255, 49, 49, 0.05) !important;
+    padding: 15px 20px !important;
+    margin: 20px 0;
+    font-family: 'Courier New', monospace;
+    border-radius: 0 4px 4px 0;
+}
+
+.cve-header {
+    color: #ff3131;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    font-weight: bold;
+    opacity: 0.9;
+}
+
+.cve-id-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #ff3131;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.cve-warning-icon {
+    font-size: 1.3rem;
+    text-shadow: 0 0 8px rgba(255, 49, 49, 0.6);
+}
+
+.cve-description {
+    color: #5e0ee9;
+    line-height: 1.5;
+    font-size: 0.9rem;
+    text-align: justify;
+}
+
+.cve-footer {
+    margin-top: 10px;
+    font-size: 0.7rem;
+    color: #ff3131;
+    opacity: 0.6;
+    text-transform: uppercase;
+}
+
+.cve-divider {
+    border-top: 1px dashed #ff3131;
+    margin-top: 15px;
+    opacity: 0.3;
+}
+
+.golden-header {
+    color: #ffd700;
+    font-size: 1.3rem;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.7), 0 0 20px rgba(255, 215, 0, 0.4);
+    margin-bottom: 20px;
+}
+
+.golden-node {
+    position: relative;
+    background: rgba(255, 215, 0, 0.05);
+    margin-bottom: 25px;
+    padding: 15px;
+    border-left: 4px solid #ffd700;
+    border-right: 1px solid rgba(255, 215, 0, 0.2);
+    box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.1);
+}
+
+.golden-node .node-label {
+    color: #000;
+    background: #ffd700;
+    border: none;
+}
+
+/* --- TERMINAL SCROLLING --- */
+.chat-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .scrub-btn {
@@ -94,7 +471,8 @@ h1#welcome {
   color: #ff4444;
   border: 1px solid #ff4444;
   font-size: 0.55rem;
-  padding: 2px 6px; 
+  padding: 2px,5px;
+  border-radius: 8px;
   cursor: pointer;
   text-transform: uppercase;
   transition: all 0.2s ease;
@@ -161,24 +539,9 @@ h1#welcome {
 
 /* INPUT*/
 .input-area { display: flex; gap: 10px; }
-textarea#messageBox {
-  flex: 1; resize: none; border-radius: 8px; padding: 12px;
-  border: 1px solid #333; background: #050505; color: #fff; outline: none;
-}
-
-textarea#messageBox {
-  flex: 1;
-  resize: none;
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid #333;
-  background: #050505;
-  color: #fff;
-  outline: none;
-}
 
 .send-btn {
-  background: #1e90ff; color: #fff; border: none; padding: 0 20px;
+  background: rgba(0, 212, 255, 0.6); color: #fff; border: none; padding: 0 20px;
   border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase;
   transition: all 0.2s ease; height: 45px;
 }
@@ -194,7 +557,6 @@ textarea#messageBox {
   top: 15px;         
   left: 15px;        
   z-index: 1000;      
-  
   background: rgba(248, 193, 41, 0.45);
   color: #ff3131;    
   border: 1px solid #ff3131;
@@ -220,9 +582,49 @@ textarea#messageBox {
     padding: 10px;
 }
 
+/* Darknet Node Specifics */
+.node-dark {
+    border-left: 4px solid #8a2be2; /* Deep Purple Theme */
+    background: rgba(138, 43, 226, 0.05);
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.onion-link {
+    color: #df00ff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    word-break: break-all;
+    text-decoration: none;
+}
+
+/* Reusable Onion Node Item */
+.onion-item {
+    padding-bottom: 8px; 
+    margin-bottom: 10px;
+    border-bottom: 1px dashed;
+}
+
+.onion-label {
+    font-weight: bold; 
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+/* Onion Color Themes */
+.theme-market { color: #ff3e3e; border-color: rgba(255, 62, 62, 0.3); }
+.theme-comm { color: #00ff88; border-color: rgba(0, 255, 136, 0.3); }
+.theme-dir { color: #ffd700; border-color: rgba(255, 215, 0, 0.3); }
+.theme-default { color: #df00ff; border-color: rgba(223, 0, 255, 0.3); }
+
 .node-wiki { border-left: 4px solid #00ff41; }
 .node-bio { border-left: 4px solid #ffd700; background: rgba(255, 215, 0, 0.05); }
-.node-search { border-left: 2px solid #00d4ff; background: rgba(0, 212, 255, 0.03); }
+.node-search { 
+    border-left: 2px solid #00d4ff !important; /* The signature DDG Cyan */
+    background: rgba(0, 212, 255, 0.03) !important; 
+    margin-bottom: 20px;
+    padding: 10px;
+}
 .node-tech { border-left: 2px solid #ff5f1f; background: rgba(255, 95, 31, 0.03); }
 .node-container a {
     cursor: pointer !important;
@@ -251,7 +653,14 @@ textarea#messageBox {
 }
 
 /* ANIMATIONS & UTILS */
-.ZeroDay { color: #ff5f1f; }
+#vault-stats {
+    font-size: 0.7rem !important;
+    color: gray !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family:'Courier New', monospace;
+    opacity: 0.7;
+}
 .NullPointer { color: #39ff14; }
 
 .blink {
@@ -259,24 +668,29 @@ textarea#messageBox {
   text-shadow: 0 0 8px #ff3e3e;
 }
 
-@keyframes pulse-red {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+.binary-stream {
+    font-family: 'Courier New', monospace;
+    color: rgba(0, 255, 65, 0.5);
+    font-size: 0.8rem;
+    letter-spacing: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    margin: 5px 0;
+    text-shadow: 0 0 5px #00ff41;
 }
 
-.scrub-btn {
-  float: right;
-  background: rgba(255, 0, 0, 0.1);
-  color: #ff4444;
-  border: 1px solid #ff4444;
-  font-size: 0.5rem;
-  padding: 2px 5px;
-  cursor: pointer;
-  text-transform: uppercase;
+.scanning-text {
+    font-weight: bold;
+    color: #fff;
+    background: #00ff41;
+    color: #000;
+    display: inline-block;
+    padding: 2px 10px;
 }
  
 .header-row, .status-bar, .input-area {
     flex-shrink: 0;}
+
 
 @media (max-width: 600px) {
   body {
@@ -291,7 +705,7 @@ textarea#messageBox {
     height: 100vh; /* Fill the screen completely */
     border-radius: 0;
     border: none;
-    padding: 10px;
+    padding: 5px;
     display: flex;
     flex-direction: column;
   }
@@ -299,11 +713,10 @@ textarea#messageBox {
 .delete-btn {
     display: none !important; /* Disables the button entirely on mobile */
   }
-
-  .header-row {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+.header-row {
+    flex-direction: row !important; /* Forces them to stay on one line */
+    justify-content: space-between;
+    padding: 5px;
   }
 
   #welcome {
@@ -312,9 +725,9 @@ textarea#messageBox {
     letter-spacing: 1px;
   }
 
-  #vault-stats {
-    font-size: 0.6rem;
-    margin-bottom: 5px;
+#vault-stats {
+    font-size: 0.5rem !important; /* Very small history label */
+    min-width: 60px; /* Ensures space for the text */
   }
 
   .status-bar {
@@ -336,5 +749,12 @@ textarea#messageBox {
     font-size: 16px; /* Prevents iPhone zoom */
     height: 45px;
   }
+.header-row {
+    margin-bottom: 5px; /* Keep messages close to the header */
+  }
+  
+h1#welcome {
+    font-size: 0.85rem; /* Shrink font so it doesn't crush the layout */
+    letter-spacing: 1px;
+  }
 }
-
