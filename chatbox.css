@@ -1,9 +1,4 @@
-/* 
-   DARK_WIKI // TERMINAL STYLESHEET
-   Logic Flow: Global -> Layout -> Components -> Intel Nodes -> Animations -> Mobile
-*/
-
-/* --- 1. GLOBAL THEME --- */
+/* GLOBAL SYTLE */
 body {
   font-family: 'Courier New', Courier, monospace;
   color: #a0ffb9;
@@ -16,7 +11,7 @@ body {
   overflow: hidden;
 }
 
-/* --- 2. LAYOUT CONTAINERS --- */
+/* LAYOUT CONTAINERS */
 .chat-container {
   width: 95%;
   max-width: 1000px;
@@ -30,6 +25,54 @@ body {
   flex-direction: column;
   position: relative;
   box-sizing: border-box;
+}
+
+.chat-container.login-box {
+  width: 90%;
+  max-width: 400px;
+  height: auto;
+  min-height: 350px;
+  margin: 0 auto;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.login-form label {
+  text-align: center;
+  width: 100%;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    background-color: #000000;
+    color: #00ff41;
+    border: 1px solid #85fca3;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.login-form input::placeholder {
+    color: #666666;
+    opacity: 1;
+}
+
+.login-form input:focus {
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
 }
 
 .header-row {
@@ -72,7 +115,7 @@ h1#welcome {
 
 #vault-stats {
     font-size: 0.7rem !important;
-    color: gray !important; /* Restored to original gray */
+    color: gray !important;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-family:'Courier New', monospace;
@@ -111,7 +154,7 @@ h1#welcome {
   flex-shrink: 0;
 }
 
-/* --- 3. UI COMPONENTS --- */
+/* UI COMPONENTS */
 textarea#messageBox {
   flex: 1;
   resize: none;
@@ -160,7 +203,7 @@ textarea#messageBox {
   color: #000;
 }
 
-/* --- 4. INTEL NODES (DYNAMIC CONTENT) --- */
+/* INTEL NODES */
 .intel-report {
     margin-top: 20px;
     font-family: 'Courier New', monospace;
@@ -194,7 +237,7 @@ textarea#messageBox {
     margin: 10px 0;
 }
 
-/* --- THEME: WIKI (BLUE) --- */
+/* WIKI */
 .wiki-border { 
     border-left: 4px solid #00d4ff; 
     background: rgba(0, 212, 255, 0.03);
@@ -207,7 +250,7 @@ textarea#messageBox {
     color: #00d4ff;
 }
 
-/* --- THEME: HUMAN BIO (GOLD) --- */
+/* HUMAN BIO */
 .golden-node {
     border-left: 4px solid #ffd700;
     background: rgba(255, 215, 0, 0.05);
@@ -221,7 +264,7 @@ textarea#messageBox {
     color: #ffffff;
 }
 
-/* --- THEME: HACKER NEWS (GREEN) --- */
+/* HACKER NEWS */
 .hn-node {
     border-left: 2px solid #39ff14;
     background: rgba(57, 255, 20, 0.03);
@@ -242,7 +285,7 @@ textarea#messageBox {
     text-shadow: 0 0 5px #39ff14;
 }
 
-/* --- THEME: DDG (PURPLE) --- */
+/* DDG */
 .ddg-node {
     border-left: 2px solid #8a2be2;
     background: rgba(138, 43, 226, 0.03);
@@ -261,7 +304,7 @@ textarea#messageBox {
     text-transform: uppercase;
 }
 
-/* --- THEME: CVE (RED) --- */
+/* CVE */
 .node-cve {
     border-left: 4px solid #ff3131;
     background: rgba(255, 49, 49, 0.05);
@@ -294,7 +337,7 @@ textarea#messageBox {
     margin-top: 15px;
 }
 
-/* --- THEME: BREACH (RED ALERT) --- */
+/* BREACH */
 .breach-node {
     border-left: 2px solid #ff3131;
     background: rgba(255, 49, 49, 0.1);
@@ -308,7 +351,7 @@ textarea#messageBox {
     font-weight: bold;
 }
 
-/* --- THEME: ONION (PURPLE/PINK) --- */
+/* ONION */
 .onion-border {
     border-left: 4px solid #df00ff;
     background: rgba(223, 0, 255, 0.03);
@@ -342,7 +385,7 @@ textarea#messageBox {
     margin: 5px 0 0 0;
 }
 
-/* --- 5. UTILITIES & ANIMATIONS --- */
+/* UTILITIES & ANIMATIONS */
 .NullPointer { color: #39ff14; }
 .ZeroDay { color: #ffd700; }
 .gold-text { color: #ffd700; font-weight: bold; }
@@ -377,24 +420,24 @@ textarea#messageBox {
 @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 @keyframes blink-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-/* --- 6. SIDE MENU --- */
-.side-menu-wrapper { position: relative; display: flex; align-items: center; height: 20px; /* Ensure relative positioning for absolute child */ }
+/* SIDE MENU */
+.side-menu-wrapper { position: relative; display: flex; align-items: center; height: 20px;}
 #menu-toggle { display: none; }
 .kebab-btn {
     display: flex; flex-direction: column; gap: 3px; cursor: pointer;
     padding: 2px; z-index: 3001; width: 20px; align-items: center;
-    margin-right: -5px; /* Pull it slightly to the edge */
+    margin-right: -5px;
 }
 .kebab-btn span {
     width: 5px; height: 5px; background-color: #ffd700; border-radius: 50%;
     box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
 }
 .side-menu-content {
-  position: absolute; top: 100%; right: 0; width: 180px; height: auto; /* Compact box */
-  background: rgba(10, 10, 10, 0.98); border: 1px solid #00ff41; border-radius: 5px; /* Box styling */
-  transition: 0.4s ease-in-out; z-index: 3000; padding: 10px; /* Reduced padding */
-  visibility: hidden; opacity: 0; /* Ensure it\'s fully hidden when closed */
-  transform: translateY(10px); /* Slight offset for dropdown effect */
+  position: absolute; top: 100%; right: 0; width: 180px; height: auto;
+  background: rgba(10, 10, 10, 0.98); border: 1px solid #00ff41; border-radius: 5px;
+  transition: 0.4s ease-in-out; z-index: 3000; padding: 10px;
+  visibility: hidden; opacity: 0;
+  transform: translateY(10px);
 }
 #menu-toggle:checked ~ .side-menu-content { right: 0; visibility: visible; opacity: 1; transform: translateY(0); }
 
@@ -406,11 +449,11 @@ textarea#messageBox {
 .menu-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; z-index: 2999;
-  display: none; /* Hide overlay when menu is closed */
+  display: none;
 }
 #menu-toggle:checked ~ .menu-overlay { visibility: visible; opacity: 1; display: block; }
 
-/* --- 7. MOBILE OPTIMIZATION --- */
+/* MOBILE OPTIMIZATION */
 @media (max-width: 600px) {
   body { height: 100%; overflow: hidden; display: block; }
   .chat-container { width: 100%; height: 100vh; border-radius: 0; border: none; }
