@@ -185,7 +185,6 @@ function forceUnlock() {
         }, 100);
     };
 
-    // Original Intro Sequence
     function runIntroSequence() {
         savedDiv.innerHTML = ""; 
         const logs = [
@@ -234,12 +233,18 @@ async function saveMessage(e) {
     const box = document.getElementById("messageBox");
     const query = box.value.trim();
     if (!query || isTyping) return;
+
+    if (query.toLowerCase() === "cmd-show-vault") {
+        box.value = "";
+        showVaultHistory();
+        return;
+    }
     
     isTyping = true;
     box.value = "";
     box.placeholder = "SEARCHING DATABASE...";
 
-    savedDiv.innerHTML = ""; // Clear previous content, including intro sequence
+    savedDiv.innerHTML = "";
 
     const scanNode = document.createElement("div");
     scanNode.className = "binary-stream";
@@ -250,7 +255,7 @@ async function saveMessage(e) {
         const onionRegex = /^(http|https):\/\/[a-z0-9]+\.onion(\/.*)?$/i;
         const emailRegex = /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,6}$/;
         let onionDirectResult = null;
-        let breachIntelPromise = Promise.resolve({found: false, breaches: []}); // Default empty breach result
+        let breachIntelPromise = Promise.resolve({found: false, breaches: []});
 
         if (onionRegex.test(query)) {
             onionDirectResult = [{ title: "Direct .onion Link", link: query, desc: "" }];
@@ -263,9 +268,9 @@ async function saveMessage(e) {
             fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&tags=story`).then(r => r.json()),
             fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&origin=*`).then(r => r.json()),
             fetchVulnerabilities(query),
-            onionDirectResult ? Promise.resolve(onionDirectResult) : fetchOnionNodes(query), // Use direct result if available
+            onionDirectResult ? Promise.resolve(onionDirectResult) : fetchOnionNodes(query),
             fetchSocialIntel(query),
-            breachIntelPromise // Use the conditional breach intel promise
+            breachIntelPromise
         ]);
 
         const wiki = results[0].status === "fulfilled" ? results[0].value : null;
@@ -282,7 +287,7 @@ async function saveMessage(e) {
     } catch (error) {
         console.error("SYSTEM_FAILURE:", error);
         scanNode.innerHTML = `<span class="system-error">>> ERROR: UPLINK_LOST.</span>`;
-        isTyping = false; // RELEASE THE LOCK
+        isTyping = false;
         const box = document.getElementById("messageBox");
         if (box) box.placeholder = "SYSTEM_READY...";
     }
@@ -291,7 +296,7 @@ async function saveMessage(e) {
 function typeWriter(container, html, speed = 10) {
     const cleanHtml = DOMPurify.sanitize(html);
     let charIndex = 0;
-    container.innerHTML = ""; // Clear container initially
+    container.innerHTML = "";
 
     const type = () => {
         if (charIndex < cleanHtml.length) {
@@ -299,27 +304,22 @@ function typeWriter(container, html, speed = 10) {
             let char = cleanHtml[charIndex];
 
             if (char === '<') {
-                // It's an HTML tag, find its end
                 const tagEndIndex = cleanHtml.indexOf('>', charIndex);
                 if (tagEndIndex !== -1) {
                     nextContent = cleanHtml.substring(charIndex, tagEndIndex + 1);
                     charIndex = tagEndIndex + 1;
                 } else {
-                    // Malformed tag, treat as regular character
                     nextContent = char;
                     charIndex++;
                 }
             } else {
-                // It's a regular character
                 nextContent = char;
                 charIndex++;
             }
-
-            // Append the next content and the blinking cursor
+ 
             container.innerHTML = cleanHtml.substring(0, charIndex) + "█";
             setTimeout(type, speed);
         } else {
-            // All content typed, remove cursor
             container.innerHTML = cleanHtml;
             isTyping = false;
             const box = document.getElementById("messageBox");
@@ -337,10 +337,8 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
         let html = `<div class="intel-report">
             <h1 class="report-header">> ANALYSIS_COMPLETE: ${query.toUpperCase()}</h1>`;
 
-        // Store all Wikipedia extract text for DDG filtering
         let wikiExtractText = wiki && wiki.extract ? wiki.extract.toLowerCase() : "";
 
-        // 1. Breach Intel (Red) - Only display if found
         if (breach && breach.found) {
             const leakData = breach.breaches?.[0] || "UNKNOWN_SOURCE"; 
             html += `
@@ -351,7 +349,6 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
             </div>`;
         }
 
-        // 2. Wikipedia (Gold for human bio with white text, Blue for others)
         if (wiki && wiki.extract) {
             const humanKeywords = ["person", "biography", "politician", "actor", "writer", "scientist", "president", "ceo", "businessman", "musician", "artist", "founder", "activist",
                                    "chairperson", "executive", "entrepreneur", "singer", "painter", "actress", "founding", "activist",
@@ -362,14 +359,14 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
                                (wiki.extract.toLowerCase().includes("was born") || wiki.extract.toLowerCase().includes("died in")) ||
                                (wiki.birthdate || wiki.deathdate);
             
-            let wikiClass = "wiki-border"; // Default blue
-            let wikiLabelClass = "label-wiki"; // Default blue
+            let wikiClass = "wiki-border";
+            let wikiLabelClass = "label-wiki";
             let wikiContentClass = "wiki-content-blue";
 
             if (isHumanBio) {
                 wikiClass = "golden-node";
                 wikiLabelClass = "golden-header";
-                wikiContentClass = "wiki-content-white"; // White text for human bios
+                wikiContentClass = "wiki-content-white";
             }
 
             html += `
@@ -380,7 +377,6 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
             </div>`;
         }
 
-        // 3. Hacker News (Green, including links)
         if (hn && hn.hits && hn.hits.length > 0) {
             html += `
             <div class="node-block hn-node">
@@ -391,7 +387,6 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
             html += `</div>`;
         }
 
-        // 4. DuckDuckGo (Purple) - Filtered and Suggestions separated
         if (ddg) {
             let uniqueSet = new Set();
             let ddgMainHtml = "";
@@ -405,7 +400,6 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
 
                 if (!uniqueSet.has(resTextLower) && !isWikiDuplicate) {
                     uniqueSet.add(resTextLower);
-                    // Simple heuristic for suggestions: if it contains a dash and multiple words
                     if (res.Text.includes("-") && res.Text.split(" ").length > 2) {
                         ddgSuggestionsHtml += `<p class="wiki-content ddg-content">▸ ${res.Text}</p>`;
                     } else {
@@ -428,21 +422,21 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
             }
         }
 
-        // 5. CVE (Red)
+        // 5. CVE
         if (cve && cve.vulnerabilities) {
             cve.vulnerabilities.slice(0, 3).forEach(v => {
                 html += renderCVE(v.cve, query);
             });
         }
 
-        // 6. Onion Nodes (Existing Purple/Pink) - Now with clickable links and proxy option
+        // 6. Onion Nodes
         if (onion && onion.length > 0) {
             html += `
             <div class="node-block onion-border">
                 <div class="node-label label-onion">[TOR_UPLINK // .ONION]</div>
                 <p class="system-message">NOTE: .onion links require a Tor Browser or a Tor-to-Web proxy.</p>
                 ${onion.map(s => {
-                    const tor2webLink = s.link.replace(".onion", ".onion.ly"); // Example proxy
+                    const tor2webLink = s.link.replace(".onion", ".onion.ly");
                     return `<div class="onion-item">
                         <a href="${s.link}" target="_blank" class="onion-link-text">${s.link}</a> 
                         <span class="system-message">(<a href="${tor2webLink}" target="_blank" class="onion-proxy-link">Open via Proxy</a>)</span>
@@ -521,6 +515,46 @@ function renderCVE(item, query) {
         ${getRelevanceLabel(item.id + description, query)}
         <div class="cve-divider"></div>
     </div>`;
+}
+
+async function showVaultHistory() {
+    isTyping = true;
+    const box = document.getElementById("messageBox");
+    box.placeholder = "ACCESSING_VAULT_RECORDS...";
+    savedDiv.innerHTML = `<p class=\"ZeroDay\">> INITIALIZING VAULT RETRIEVAL...</p>`;
+
+    const transaction = db.transaction(STORE_NAME, "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+    const getAllRequest = store.getAll();
+
+    getAllRequest.onsuccess = () => {
+        const records = getAllRequest.result;
+        
+        if (records.length === 0) {
+            savedDiv.innerHTML = `<p class=\"system-error\">> VAULT_EMPTY: NO HISTORY FOUND.</p>`;
+            systemSafetyReset();
+            return;
+        }
+
+        let historyHtml = `<div class="intel-report">
+            <h1 class="report-header">> VAULT_HISTORY_DUMP: ${records.length} RECORDS</h1>`;
+
+        records.forEach(record => {
+            historyHtml += `<div class="node-block wiki-border">
+                <div class="node-label label-wiki">[HISTORICAL_RECORD: ${record.id.toUpperCase()}]</div>
+                <div class="history-content">${record.html}</div>
+            </div><br>`;
+        });
+
+        historyHtml += `</div>`;
+
+        typeWriter(savedDiv, historyHtml, 1);
+    };
+
+    getAllRequest.onerror = () => {
+        savedDiv.innerHTML = `<p class=\"system-error\">> CRITICAL_ERROR: VAULT_LINK_FAILED.</p>`;
+        systemSafetyReset();
+    };
 }
 
     // Helper Functions
