@@ -93,14 +93,13 @@ function systemSafetyReset() {
     console.log("SAFETY_TRIGGERED: Lock released.");
 }
 
+
 function getRelevanceLabel(text, query) {
     if (!text || !query) return "";
     const isMatch = text.toLowerCase().includes(query.toLowerCase());
     
     if (!isMatch) {
-        return `<div style="margin-top: 10px;">
-                    <del style="text-decoration: line-through; color: #ff3131; opacity: 0.6; font-size: 0.8rem;">${query.toUpperCase()}</del>
-                </div>`;
+        return `<div class="relevance-strike">${query.toUpperCase()}</div>`;
     }
     return "";
 }
@@ -208,10 +207,10 @@ function forceUnlock() {
 async function fetchBreachIntel(target) {
     try {
         const response = await fetch(`BreachNode.php?target=${encodeURIComponent(target)}`);
-        if (!response.ok) return { found: false, leaks: [] };
+        if (!response.ok) return { found: false, breaches: [] };
         return await response.json();
     } catch (e) {
-        return { found: false, leaks: [] };
+        return { found: false, breaches: [] };
     }
 }
 
@@ -240,6 +239,8 @@ async function saveMessage(e) {
     box.value = "";
     box.placeholder = "SEARCHING DATABASE...";
 
+    savedDiv.innerHTML = ""; // Clear previous content, including intro sequence
+
     const scanNode = document.createElement("div");
     scanNode.className = "binary-stream";
     scanNode.innerHTML = `> QUERY: ${query.toUpperCase()}<br>> ANALYZING_NETWORK_NODES...`;
@@ -249,7 +250,7 @@ async function saveMessage(e) {
         const onionRegex = /^(http|https):\/\/[a-z0-9]+\.onion(\/.*)?$/i;
         const emailRegex = /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,6}$/;
         let onionDirectResult = null;
-        let breachIntelPromise = Promise.resolve({found: false, leaks: []}); // Default empty breach result
+        let breachIntelPromise = Promise.resolve({found: false, breaches: []}); // Default empty breach result
 
         if (onionRegex.test(query)) {
             onionDirectResult = [{ title: "Direct .onion Link", link: query, desc: "" }];
@@ -273,7 +274,7 @@ async function saveMessage(e) {
         const cve = results[3].status === "fulfilled" ? results[3].value : null;
         const onion = results[4].status === "fulfilled" ? results[4].value : [];
         const social = results[5].status === "fulfilled" ? results[5].value : [];
-        const breach = results[6].status === "fulfilled" ? results[6].value : {found: false, leaks: []};
+        const breach = results[6].status === "fulfilled" ? results[6].value : {found: false, breaches: []};
 
         scanNode.remove();
         renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breach);
@@ -289,26 +290,45 @@ async function saveMessage(e) {
 
 function typeWriter(container, html, speed = 10) {
     const cleanHtml = DOMPurify.sanitize(html);
-    const temp = document.createElement("div");
-    temp.innerHTML = cleanHtml;
-    const textContent = temp.textContent || temp.innerText || ""; 
-    let i = 0;
+    let charIndex = 0;
+    container.innerHTML = ""; // Clear container initially
 
     const type = () => {
-        if (i < textContent.length) {
-            container.textContent = textContent.substring(0, i) + "█";
-            i++;
+        if (charIndex < cleanHtml.length) {
+            let nextContent = "";
+            let char = cleanHtml[charIndex];
+
+            if (char === '<') {
+                // It's an HTML tag, find its end
+                const tagEndIndex = cleanHtml.indexOf('>', charIndex);
+                if (tagEndIndex !== -1) {
+                    nextContent = cleanHtml.substring(charIndex, tagEndIndex + 1);
+                    charIndex = tagEndIndex + 1;
+                } else {
+                    // Malformed tag, treat as regular character
+                    nextContent = char;
+                    charIndex++;
+                }
+            } else {
+                // It's a regular character
+                nextContent = char;
+                charIndex++;
+            }
+
+            // Append the next content and the blinking cursor
+            container.innerHTML = cleanHtml.substring(0, charIndex) + "█";
             setTimeout(type, speed);
         } else {
+            // All content typed, remove cursor
             container.innerHTML = cleanHtml;
-            isTyping = false; 
+            isTyping = false;
             const box = document.getElementById("messageBox");
             if (box) box.placeholder = "SYSTEM_READY...";
             const messages = document.getElementById("savedMessages");
             messages.scrollTop = messages.scrollHeight;
         }
     };
-    
+
     type();
 }
 
@@ -317,37 +337,45 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
         let html = `<div class="intel-report">
             <h1 class="report-header">> ANALYSIS_COMPLETE: ${query.toUpperCase()}</h1>`;
 
+        // Store all Wikipedia extract text for DDG filtering
+        let wikiExtractText = wiki && wiki.extract ? wiki.extract.toLowerCase() : "";
+
         // 1. Breach Intel (Red) - Only display if found
         if (breach && breach.found) {
-            const leakData = breach.breaches?.[0] || "UNKNOWN_SOURCE"; // Adjusted to match BreachNode.php output
+            const leakData = breach.breaches?.[0] || "UNKNOWN_SOURCE"; 
             html += `
-            <div class="node-block" style="border-left:2px solid #ff3131;">
-                <div class="node-label" style="color:#ff3131;">[BREACH_NODE // ALERT]</div>
-                <p class="wiki-content" style="color:#ff3131;">⚠ IDENTITY_EXPOSURE</p>
+            <div class="node-block breach-node">
+                <div class="node-label label-breach">[BREACH_NODE // ALERT]</div>
+                <p class="wiki-content breach-content">⚠ IDENTITY_EXPOSURE</p>
                 <p class="cve-description">SOURCE: ${leakData.toUpperCase()}</p>
             </div>`;
         }
 
-        // 2. Wikipedia (Gold for human bio, Blue for others)
+        // 2. Wikipedia (Gold for human bio with white text, Blue for others)
         if (wiki && wiki.extract) {
-            const isHumanBio = (wiki.description && (wiki.description.toLowerCase().includes("person") || wiki.description.toLowerCase().includes("biography"))) ||
-                               (wiki.extract.toLowerCase().includes("was born") || wiki.extract.toLowerCase().includes("died in"));
+            const humanKeywords = ["person", "biography", "politician", "actor", "writer", "scientist", "president", "ceo", "businessman", "musician", "artist", "founder", "activist",
+                                   "chairperson", "executive", "entrepreneur", "singer", "painter", "actress", "founding", "activist",
+                                   "presidents", "ceos", "businessmen", "musicians", "artists", "actors", "politicians", "founders", "activists"];
+            const humanKeywordsRegex = new RegExp(`\\b(${humanKeywords.join("|")})\\b`, "i");
+
+            const isHumanBio = (wiki.description && humanKeywordsRegex.test(wiki.description)) ||
+                               (wiki.extract.toLowerCase().includes("was born") || wiki.extract.toLowerCase().includes("died in")) ||
+                               (wiki.birthdate || wiki.deathdate);
             
             let wikiClass = "wiki-border"; // Default blue
             let wikiLabelClass = "label-wiki"; // Default blue
-            let wikiContentStyle = "";
+            let wikiContentClass = "wiki-content-blue";
 
             if (isHumanBio) {
                 wikiClass = "golden-node";
                 wikiLabelClass = "golden-header";
-            } else {
-                wikiContentStyle = "color:#00d4ff;"; // Explicitly set blue for content if not human bio
+                wikiContentClass = "wiki-content-white"; // White text for human bios
             }
 
             html += `
             <div class="node-block ${wikiClass}">
                 <div class="node-label ${wikiLabelClass}">[WIKI_NODE]</div>
-                <p class="wiki-content" style="${wikiContentStyle}">${wiki.extract}</p>
+                <p class="wiki-content ${wikiContentClass}">${wiki.extract}</p>
                 ${getRelevanceLabel(wiki.extract, query)}
             </div>`;
         }
@@ -355,36 +383,48 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
         // 3. Hacker News (Green, including links)
         if (hn && hn.hits && hn.hits.length > 0) {
             html += `
-            <div class="node-block" style="border-left:2px solid #39ff14;">
-                <div class="node-label" style="color:#39ff14;">[HN_NODE]</div>`;
+            <div class="node-block hn-node">
+                <div class="node-label label-hn">[HN_NODE]</div>`;
             hn.hits.slice(0, 3).forEach(hit => {
-                html += `<p class="wiki-content"><a href="${hit.url}" target="_blank" style="color:#39ff14; text-decoration:none;">▸ ${hit.title}</a></p>`;
+                html += `<a href="${hit.url}" target="_blank" class="hn-link">▸ ${hit.title}</a>`;
             });
             html += `</div>`;
         }
 
-        // 4. DuckDuckGo (Purple) - Only display results not in Wiki
+        // 4. DuckDuckGo (Purple) - Filtered and Suggestions separated
         if (ddg) {
             let uniqueSet = new Set();
-            let ddgHtml = "";
+            let ddgMainHtml = "";
+            let ddgSuggestionsHtml = "";
             const rawResults = [...(ddg.RelatedTopics || []), {Text: ddg.AbstractText}]
                 .filter(t => t && t.Text);
 
             rawResults.forEach(res => {
-                const isWikiDuplicate = (wiki && wiki.extract && wiki.extract.toLowerCase().includes(res.Text.toLowerCase()));
+                const resTextLower = res.Text.toLowerCase();
+                const isWikiDuplicate = wikiExtractText.includes(resTextLower);
 
-                if (!uniqueSet.has(res.Text) && !isWikiDuplicate) {
-                    uniqueSet.add(res.Text);
-                    ddgHtml += `<p class="wiki-content" style="color:#8a2be2;">▸ ${res.Text}</p>`; // Purple color
+                if (!uniqueSet.has(resTextLower) && !isWikiDuplicate) {
+                    uniqueSet.add(resTextLower);
+                    // Simple heuristic for suggestions: if it contains a dash and multiple words
+                    if (res.Text.includes("-") && res.Text.split(" ").length > 2) {
+                        ddgSuggestionsHtml += `<p class="wiki-content ddg-content">▸ ${res.Text}</p>`;
+                    } else {
+                        ddgMainHtml += `<p class="wiki-content ddg-content">▸ ${res.Text}</p>`;
+                    }
                 }
             });
 
-            if (ddgHtml) {
+            if (ddgMainHtml || ddgSuggestionsHtml) {
                 html += `
-                <div class="node-block" style="border-left:2px solid #8a2be2;">
-                    <div class="node-label" style="color:#8a2be2;">[NET_RECON // DDG]</div>
-                    ${ddgHtml}
-                </div>`;
+                <div class="node-block ddg-node">
+                    <div class="node-label label-ddg">[NET_RECON // DDG]</div>`;
+                if (ddgMainHtml) {
+                    html += ddgMainHtml;
+                }
+                if (ddgSuggestionsHtml) {
+                    html += `<h3 class="ddg-suggestions-heading">[SUGGESTIONS]</h3>` + ddgSuggestionsHtml;
+                }
+                html += `</div>`;
             }
         }
 
@@ -395,17 +435,20 @@ function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breac
             });
         }
 
-        // 6. Onion Nodes (Existing Purple/Pink) - Now with clickable links
+        // 6. Onion Nodes (Existing Purple/Pink) - Now with clickable links and proxy option
         if (onion && onion.length > 0) {
             html += `
             <div class="node-block onion-border">
                 <div class="node-label label-onion">[TOR_UPLINK // .ONION]</div>
-                ${onion.map(s =>
-                    `<div class="onion-item">
-                        <a href="${s.link}" target="_blank" class="onion-link-text">${s.link}</a>
+                <p class="system-message">NOTE: .onion links require a Tor Browser or a Tor-to-Web proxy.</p>
+                ${onion.map(s => {
+                    const tor2webLink = s.link.replace(".onion", ".onion.ly"); // Example proxy
+                    return `<div class="onion-item">
+                        <a href="${s.link}" target="_blank" class="onion-link-text">${s.link}</a> 
+                        <span class="system-message">(<a href="${tor2webLink}" target="_blank" class="onion-proxy-link">Open via Proxy</a>)</span>
                         <p class="onion-desc">${s.title}</p>
-                    </div>`
-                ).join("")}
+                    </div>`;
+                }).join("")}
             </div>`;
         }
 
@@ -443,8 +486,6 @@ async function fetchVulnerabilities(query) {
 }
 
 async function fetchOnionNodes(query) {
-    // This function will now only be called for non-direct .onion URL searches
-    // The direct .onion URL handling is done in saveMessage
     try {
         const response = await fetch(`proxy.php?query=${encodeURIComponent(query)}`);
         const data = await response.json();
@@ -464,21 +505,20 @@ async function fetchOnionNodes(query) {
 function renderCVE(item, query) {
     const description = item.descriptions.find(d => d.lang === "en")?.value || "Data Redacted.";
     const score = item.metrics?.cvssMetricV31?.[0]?.cvssData?.baseScore || "N/A";
-    const relevance = getRelevanceLabel(item.id + description, query);
     return `
     <div class="node-cve">
         <div class="cve-header">[VULNERABILITY_DB]</div>
         <div class="cve-id-row">
             <span class="cve-warning-icon">⚠</span>
-            <a href="https://nvd.nist.gov/vuln/detail/${item.id}" target="_blank" style="color:inherit; text-decoration:none;">
+            <a href="https://nvd.nist.gov/vuln/detail/${item.id}" target="_blank" class="cve-link">
                 <span>${item.id}</span>
             </a>
-            <span style="font-size:0.7rem; margin-left:10px;">(SCORE: ${score})</span>
+            <span class="cve-score">(SCORE: ${score})</span>
         </div>
         <div class="cve-description">
             ${description.length > 300 ? description.substring(0, 300) + "..." : description}
         </div>
-        ${relevance}
+        ${getRelevanceLabel(item.id + description, query)}
         <div class="cve-divider"></div>
     </div>`;
 }
