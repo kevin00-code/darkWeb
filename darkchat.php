@@ -1,9 +1,14 @@
 <?php
-if (file_exists('auth_check.php')) {
-    require_once 'auth_check.php';
+session_start();
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["username"])) {
+    $_SESSION["codename"] = $_POST["username"];
+}
+if (file_exists("auth_check.php")) {
+    require_once "auth_check.php";
     verify_access(); 
 }
-$username = $_SESSION['codename'];
+
+$username = $_SESSION["codename"] ?? "GHOST";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,22 +19,41 @@ $username = $_SESSION['codename'];
   <link rel="stylesheet" href="chatbox.css">
 </head>
 <body>
-
-<button class="delete-btn" onclick="clearMessages()">DELETE HISTORY</button>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <div class="chat-container">
   <div class="header-row">
       <div class="header-left">
-          <div id="vault-stats" class="ZeroDay">VAULT_ENTRIES: 0 SAVED</div>
+          <div id="vault-stats" class="ZeroDay">HISTORY: 0 SAVED</div>
       </div>
       <div class="header-center">
           <h1 id="welcome">USER // <?php echo strtoupper($username); ?></h1>
       </div>
-      <div class="header-right"></div>
+      <div class="header-right">
+<div class="side-menu-wrapper">
+    <input type="checkbox" id="menu-toggle">
+    <label for="menu-toggle" class="kebab-btn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+
+    <div class="side-menu-content">
+        <div class="menu-header">[CONTROL_PANEL]</div>
+        <div class="menu-items">
+            <a href="#" class="menu-link" onclick="clearMessages()">
+                <span class="gold-text">></span> DELETE HISTORY</a>
+            <a href="logout.php" class="menu-link">
+                <span class="gold-text">></span> TERMINATE_SESSION
+            </a>
+        </div>
+    </div>
+    <label for="menu-toggle" class="menu-overlay"></label>
+</div>
+      </div>
   </div>
 
   <div class="status-bar">
-    <div>STATUS: <span id="connection-light">[CONNECTED]</span></div> 
+    <div>STATUS: <span id="connection-light">[...]</span></div> 
     <button class="scrub-btn" onclick="clearDisplay()">CLEAR TERMINAL</button>
   </div>
 
@@ -37,27 +61,73 @@ $username = $_SESSION['codename'];
       <p class="NullPointer">> System handshaking...</p>
   </div>
 
-  <form class="input-area" onsubmit="saveMessage(event)">
+<form class="input-area" onsubmit="saveMessage(event)">
     <textarea id="messageBox" rows="1" placeholder="Search database..." required></textarea>
     <input type="submit" value="SEARCH" class="send-btn">
-  </form>
+</form>
 </div>
 
 <script>
-    // 1. Get username from PHP Session
-    const username = "<?php echo $username; ?>";
-    let currentActiveNode = null;
+const username = "<?php echo htmlspecialchars(strtoupper($username), ENT_QUOTES); ?>";
+let isTyping = false; // The Gatekeeper
 
+//database intialization
+let db;
+const DB_NAME = "DarkWikiVault";
+const STORE_NAME = "intel_cache";
+const request = indexedDB.open(DB_NAME, 1);
+
+const savedDiv = document.getElementById("savedMessages");
+
+document.getElementById("messageBox").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        saveMessage(e);
+}
+})
+
+function systemSafetyReset() {
+    isTyping = false;
+    const box = document.getElementById("messageBox");
+    if(box) box.placeholder = "SYSTEM_READY // ENTER_QUERY...";
+    console.log("SAFETY_TRIGGERED: Lock released.");
+}
+
+function getRelevanceLabel(text, query) {
+    if (!text || !query) return "";
+    const isMatch = text.toLowerCase().includes(query.toLowerCase());
+    
+    if (!isMatch) {
+        return `<div style="margin-top: 10px;">
+                    <del style="text-decoration: line-through; color: #ff3131; opacity: 0.6; font-size: 0.8rem;">${query.toUpperCase()}</del>
+                </div>`;
+    }
+    return "";
+}
+
+function updateOnlineStatus() {
+    const light = document.getElementById("connection-light");
+    if (!navigator.onLine) {
+        light.textContent = "[OFFLINE]";
+        light.className = "status-offline blink";
+    } else {
+        light.className = "status-low";
+        light.textContent = "[ONLINE // STABLE]";
+    }
+}
+
+updateOnlineStatus();
+setInterval(updateOnlineStatus, 2000);
+
+// Audio Engine
     const SoundEngine = {
         ctx: null,
-        init() {
-            if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        },
+        init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
         blip(freq = 150, duration = 0.05) {
             this.init();
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
-            osc.type = 'square';
+            osc.type = "square";
             osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
             gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
@@ -70,7 +140,7 @@ $username = $_SESSION['codename'];
             this.init();
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
-            osc.type = 'sine';
+            osc.type = "sine";
             osc.frequency.setValueAtTime(90 + Math.random() * 20, this.ctx.currentTime);
             gain.gain.setValueAtTime(0.015, this.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.02);
@@ -81,46 +151,43 @@ $username = $_SESSION['codename'];
         }
     };
 
-    const DB_NAME = "DarkWiki_Vault";
-    const STORE_NAME = "archives";
-    let db;
-    let savedDiv;
+request.onblocked = function() {
+    console.warn("DATABASE_LOCKED: Closing old connections...");
+    alert("System recovery required. Refreshing session...");
+    location.reload();
+};
 
-    // 2. Open IndexedDB
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = (e) => {
-        db = e.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME, { keyPath: "id" });
-        }
-    };
-    request.onsuccess = (e) => { 
-        db = e.target.result; 
-        if(document.readyState === "complete") runIntroSequence(); 
-    };
-
-function updateOnlineStatus() {
-    const light = document.getElementById("connection-light");
-    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    
-    if (navigator.onLine) {
-        light.className = "status-low";
-        if (conn.rtt > 300) 
-            { light.className = "status-high"; }
-        if (conn && conn.rtt) {
-            light.textContent = `[ONLINE // LATENCY: ${conn.rtt}ms]`;
-        } else {
-            light.textContent = "[ONLINE // STABLE]";
-        }
-    } else {
-        light.textContent = "[OFFLINE]";
-        light.className = "status-offline blink";
+request.onupgradeneeded = (e) => {
+    db = e.target.result;
+    if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "id" });
     }
-}
-    setInterval(updateOnlineStatus, 2000);
+};
 
+request.onsuccess = (e) => {
+    db = e.target.result;
+    console.log("SYSTEM_READY: Vault Link Established");
+    updateVaultStats();
+};
+
+function forceUnlock() {
+    isTyping = false;
+    const box = document.getElementById("messageBox");
+    if(box) box.placeholder = "SEARCH_QUERY_INITIATED...";
+    console.log("LOCK_CLEARED: Input restored.");
+}
+
+    window.onload = () => { 
+        const retry = setInterval(() => {
+            if (db) {
+                runIntroSequence();
+                clearInterval(retry);
+            }
+        }, 100);
+    };
+
+    // Original Intro Sequence
     function runIntroSequence() {
-        savedDiv = document.getElementById("savedMessages");
         savedDiv.innerHTML = ""; 
         const logs = [
             { cls: "NullPointer", msg: `> Connection established. Welcome, ${username}.` },
@@ -138,227 +205,291 @@ function updateOnlineStatus() {
         });
     }
 
+async function fetchBreachIntel(target) {
+    try {
+        const response = await fetch(`BreachNode.php?target=${encodeURIComponent(target)}`);
+        if (!response.ok) return { found: false, leaks: [] };
+        return await response.json();
+    } catch (e) {
+        return { found: false, leaks: [] };
+    }
+}
+
+    // Social Reconnaissance Node
+async function fetchSocialIntel(target) {
+   const platforms = [
+        { name: "GitHub", url: `https://api.github.com/users/${target}` },
+        { name: "HN_User", url: `https://hn.algolia.com/api/v1/users/${target}` }
+    ];
+
+    const results = await Promise.all(platforms.map(p => 
+        fetch(p.url).then(r => r.ok ? r.json() : null).catch(() => null)
+    ));
+
+    return results.filter(r => r !== null);
+}
+
+    // SEARCH LOGIC
 async function saveMessage(e) {
     if (e) e.preventDefault();
     const box = document.getElementById("messageBox");
     const query = box.value.trim();
-    if (!query) return;
-
-    const lowerQuery = query.toLowerCase();
-
-    savedDiv.innerHTML = `
-        <div class="scanning-text flicker">> ACCESSING GLOBAL NODE: ${query.toUpperCase()}</div>
-        <div class="progress-container"><div id="pbar" class="progress-bar"></div></div>
-        <div id="matrix" class="matrix-loader"></div>
-    `;
-
-    const pbar = document.getElementById("pbar");
-    const matrix = document.getElementById("matrix");
-
-    // --- START OF REPLACEMENT ---
-    const dataPromise = (async () => {
-        const cached = await dbGet(lowerQuery);
-        if (cached) return { type: 'cache', data: cached.html };
-        
-        try {
-            // Get Wikipedia title suggestion first
-            const suggestRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&namespace=0&format=json&origin=*`).catch(() => null);
-            const suggestData = suggestRes ? await suggestRes.json() : [];
-            const searchTitle = (suggestData && suggestData[1] && suggestData[1].length > 0) ? suggestData[1][0] : query;
-
-            // Fetch everything in parallel with individual safety nets
-            const [wikiRes, hnData, ddgData, cveData] = await Promise.all([
-                fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTitle)}?origin=*`)
-                    .then(res => res.ok ? res.json() : null).catch(() => null),
-                fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&tags=story`)
-                    .then(res => res.json()).catch(() => ({ hits: [] })),
-                fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&origin=*`)
-                    .then(res => res.json()).catch(() => ({ RelatedTopics: [] })),
-                fetchVulnerabilities(query).catch(() => [])
-            ]);
-
-            return {
-                type: 'fresh',
-                wiki: wikiRes,
-                hn: hnData,
-                ddg: ddgData,
-                cve: cveData
-            };
-        } catch (err) { 
-            return { type: 'error', msg: "UPLINK_TIMEOUT: " + err.message }; 
-        }
-    })();
-    // --- END OF REPLACEMENT ---
-
-    let progress = 0;
-    const interval = setInterval(() => {
-        if (progress < 90) {
-            progress += Math.random() * 10; 
-            pbar.style.width = Math.min(progress, 90) + "%";
-            matrix.innerText = Math.random().toString(16).substring(2, 60);
-            if (Math.random() > 0.7) SoundEngine.blip(80, 0.05);
-        }
-    }, 100);
-
-    const result = await dataPromise;
-    clearInterval(interval);
-    pbar.style.width = "100%";
+    if (!query || isTyping) return;
     
-    // Final rendering logic...
-    if (result.type === 'cache') {
-        typeWriter(savedDiv, result.data, 2);
-    } else if (result.type === 'error') {
-        systemLog("> " + result.msg);
-    } else {
-        renderAggressiveResults(query, result.wiki, result.hn, result.ddg, result.cve);
-    }
+    isTyping = true;
     box.value = "";
-}
+    box.placeholder = "SEARCHING DATABASE...";
 
-    function renderAggressiveResults(query, wiki, hn, ddg, cve) {
-        // 1. Determine if this is a PERSON to set the theme
-    const bioKeywords = ['president', 'ceo', 'businessman', 'businesswoman','musician','artist', 'actor','actress', 'activist', 'politician', 'founder','father','mother','sister','brother','wife','husband','model','first lady'];
-    const isPerson = wiki && wiki.description && bioKeywords.some(word => wiki.description.toLowerCase().includes(word));
-
-    // Dynamic Colors based on subject type
-    const titleColor = isPerson ? "#ffd700" : "#00ff41"; // Gold for person, Green for others
-    const contentColor = "#ffffff";
-    const nodeClass = isPerson ? "node-container node-bio" : "node-container node-wiki";
+    const scanNode = document.createElement("div");
+    scanNode.className = "binary-stream";
+    scanNode.innerHTML = `> QUERY: ${query.toUpperCase()}<br>> ANALYZING_NETWORK_NODES...`;
+    savedDiv.appendChild(scanNode);
     
-        let html = `<div class="wiki-entry"><h1 class="wiki-title" style="color:#00ff41; border-bottom: 2px solid #00ff41; margin-top: 0;">INTEGRATED_INTELLIGENCE: ${query.toUpperCase()}</h1>`;
-        // 1. WIKIPEDIA NODE
-        if (wiki && wiki.extract) {
-        html += `<div class="${nodeClass}">
-                    <p class="ZeroDay" style="color:${titleColor};">[${isPerson ? 'PERSON_ARCHIVE' : 'WIKI_NODE'} // SOURCE_V1]</p>
-                    <h2 style="color:${titleColor}; font-size:1.1rem; margin: 5px 0;">${wiki.title}</h2>
-                    <p class="wiki-content" style="color:${contentColor};">${wiki.extract}</p>
-                 </div>`;
-          }
-        // 2. DDG
-        if (ddg && ddg.RelatedTopics) {
-        const onionUrl = "https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion/?q=" + encodeURIComponent(query);
-        html += `<div class="node-container">
-                    <p style="color:#00d4ff;">[NET_RECON // DUCKDUCKGO]</p>
-                    <a href="${onionUrl}" target="_blank" style="color:#d400ff; font-weight:bold; text-decoration:none;">>>> ESTABLISH TOR UPLINK (HIDDEN_WIKI_GATEWAY)</a>`;
-        
-        ddg.RelatedTopics.slice(0, 5).forEach(topic => { // LIMIT: 5
-            if (topic.Text) html += `<p class="wiki-content" style="color:#00d4ff;">▸ ${topic.Text.substring(0,100)}...</p>`;
-        });
-        html += `</div>`;
-        }
-
-    // 3. HACKER NEWS NODE 
-        if (hn.hits && hn.hits.length > 0) {
-        html += `<div class="node-container node-tech"><p class="ZeroDay" style="color:#ff5f1f;">[TECH_LOGS // HACKER_NEWS]</p>`;
-        hn.hits.slice(0, 5).forEach(hit => {
-            html += `<p class="wiki-content" style="margin-bottom:5px;">▸ <a href="${hit.url}" target="_blank" class="hn-link">${hit.title}</a></p>`;
-        });
-        html += `</div>`;
-    }
-
-    // 4. CVE VULNERABILITY NODE
-         if (cve && cve.length > 0) {
-        html += `<div class="node-container node-cve" style="border-left: 4px solid #ff3e3e; background: rgba(255, 62, 62, 0.05); padding: 10px;">
-                    <p class="ZeroDay" style="color:#ff3e3e;">[VULNERABILITY_DB // NIST_NVD]</p>`;
-        
-        cve.forEach(item => {
-            const cveId = item.cve.id;
-            const descObj = item.cve.descriptions.find(d => d.lang === 'en');
-            const desc = descObj ? descObj.value : "No description available.";
-            const nvdUrl = `https://nvd.nist.gov/vuln/detail/${cveId}`;
-            
-         html += `<div style="margin-bottom: 12px; border-bottom: 1px dashed #ff3e3e; padding-bottom: 5px;">
-            <a href="${nvdUrl}" target="_blank" style="color:#ff3e3e; font-weight:bold; text-decoration:none; display:block; cursor:pointer;">
-                ⚠ ${cveId}
-            </a>
-            <p class="wiki-content" style="font-size: 0.8rem; color:#ffa0a0; margin: 2px 0;">${desc.substring(0, 200)}...</p>
-         </div>`;
-       });
-       html += `</div>`;
-    }
-       html += `</div>`;
-       dbSave(query, html);
-       typeWriter(savedDiv, html, 2);
-   }
-
-async function fetchVulnerabilities(query) {
     try {
-        const res = await fetch(`https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        return data.vulnerabilities.slice(0, 5);
-    } catch (e) { return null; }
+        const onionRegex = /^(http|https):\/\/[a-z0-9]+\.onion(\/.*)?$/i;
+        const emailRegex = /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,6}$/;
+        let onionDirectResult = null;
+        let breachIntelPromise = Promise.resolve({found: false, leaks: []}); // Default empty breach result
+
+        if (onionRegex.test(query)) {
+            onionDirectResult = [{ title: "Direct .onion Link", link: query, desc: "" }];
+        } else if (emailRegex.test(query)) {
+            breachIntelPromise = fetchBreachIntel(query);
+        }
+
+        const results = await Promise.allSettled([
+            fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}?origin=*`).then(r => r.json()),
+            fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&tags=story`).then(r => r.json()),
+            fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&origin=*`).then(r => r.json()),
+            fetchVulnerabilities(query),
+            onionDirectResult ? Promise.resolve(onionDirectResult) : fetchOnionNodes(query), // Use direct result if available
+            fetchSocialIntel(query),
+            breachIntelPromise // Use the conditional breach intel promise
+        ]);
+
+        const wiki = results[0].status === "fulfilled" ? results[0].value : null;
+        const hn = results[1].status === "fulfilled" ? results[1].value : { hits: [] };
+        const ddg = results[2].status === "fulfilled" ? results[2].value : null;
+        const cve = results[3].status === "fulfilled" ? results[3].value : null;
+        const onion = results[4].status === "fulfilled" ? results[4].value : [];
+        const social = results[5].status === "fulfilled" ? results[5].value : [];
+        const breach = results[6].status === "fulfilled" ? results[6].value : {found: false, leaks: []};
+
+        scanNode.remove();
+        renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breach);
+        
+    } catch (error) {
+        console.error("SYSTEM_FAILURE:", error);
+        scanNode.innerHTML = `<span class="system-error">>> ERROR: UPLINK_LOST.</span>`;
+        isTyping = false; // RELEASE THE LOCK
+        const box = document.getElementById("messageBox");
+        if (box) box.placeholder = "SYSTEM_READY...";
+    }
 }
 
-    async function dbSave(query, html) {
-        if (!db) return;
-        const tx = db.transaction(STORE_NAME, "readwrite");
-        tx.objectStore(STORE_NAME).put({ id: query.toLowerCase(), html: html, timestamp: Date.now() });
-        tx.oncomplete = updateVaultStats;
-    }
-
-    async function dbGet(query) {
-        return new Promise((resolve) => {
-            if (!db) return resolve(null);
-            const tx = db.transaction(STORE_NAME, "readonly");
-            const req = tx.objectStore(STORE_NAME).get(query.toLowerCase());
-            req.onsuccess = () => resolve(req.result);
-        });
-    }
-
-    function clearMessages() {
-        if(confirm("Purge ALL vault storage?")) {
-            db.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME).clear();
-            location.reload();
-        }
-    }
-
-    async function updateVaultStats() {
-        if (!db) return;
-        const store = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME);
-        const countReq = store.count();
-        countReq.onsuccess = () => {
-            document.getElementById("vault-stats").textContent = `VAULT_ENTRIES: ${countReq.result} NODES ARCHIVED`;
-        };
-    }
-
-function typeWriter(element, html, speed = 10) {
+function typeWriter(container, html, speed = 10) {
+    const cleanHtml = DOMPurify.sanitize(html);
+    const temp = document.createElement("div");
+    temp.innerHTML = cleanHtml;
+    const textContent = temp.textContent || temp.innerText || ""; 
     let i = 0;
-    element.innerHTML = "";
-    
-    // Detect mobile for dynamic speed
-    const isMobile = window.innerWidth <= 600;
-    const finalSpeed = isMobile ? 2 : speed; // Much faster on mobile
 
-    function type() {
-        if (i < html.length) {
-            // Handle HTML tags so they don't "leak" into the typewriter effect
-            if (html.charAt(i) === '<') {
-                i = html.indexOf('>', i) + 1;
-            } else {
-                i++;
-                // Sound only on desktop to prevent mobile audio lag
-                if (!isMobile) SoundEngine.typeClick(); 
-            }
-            element.innerHTML = html.substring(0, i);
-            setTimeout(type, finalSpeed);
+    const type = () => {
+        if (i < textContent.length) {
+            container.textContent = textContent.substring(0, i) + "█";
+            i++;
+            setTimeout(type, speed);
+        } else {
+            container.innerHTML = cleanHtml;
+            isTyping = false; 
+            const box = document.getElementById("messageBox");
+            if (box) box.placeholder = "SYSTEM_READY...";
+            const messages = document.getElementById("savedMessages");
+            messages.scrollTop = messages.scrollHeight;
         }
-    }
+    };
+    
     type();
 }
 
-    function clearDisplay() {
-        document.getElementById("savedMessages").innerHTML = `<p class="NullPointer">> Terminal display purged.</p>`;
-        SoundEngine.blip(300, 0.1);
-    }
+function renderAggressiveResults(query, wiki, hn, ddg, cve, onion, social, breach) {
+    try {
+        let html = `<div class="intel-report">
+            <h1 class="report-header">> ANALYSIS_COMPLETE: ${query.toUpperCase()}</h1>`;
 
-    function systemLog(msg) {
-        const p = document.createElement("p");
-        p.className = "ZeroDay";
-        p.textContent = msg;
-        document.getElementById("savedMessages").appendChild(p);
-    }
+        // 1. Breach Intel (Red) - Only display if found
+        if (breach && breach.found) {
+            const leakData = breach.breaches?.[0] || "UNKNOWN_SOURCE"; // Adjusted to match BreachNode.php output
+            html += `
+            <div class="node-block" style="border-left:2px solid #ff3131;">
+                <div class="node-label" style="color:#ff3131;">[BREACH_NODE // ALERT]</div>
+                <p class="wiki-content" style="color:#ff3131;">⚠ IDENTITY_EXPOSURE</p>
+                <p class="cve-description">SOURCE: ${leakData.toUpperCase()}</p>
+            </div>`;
+        }
 
-    window.onload = () => { if(db) runIntroSequence(); };
+        // 2. Wikipedia (Gold for human bio, Blue for others)
+        if (wiki && wiki.extract) {
+            const isHumanBio = (wiki.description && (wiki.description.toLowerCase().includes("person") || wiki.description.toLowerCase().includes("biography"))) ||
+                               (wiki.extract.toLowerCase().includes("was born") || wiki.extract.toLowerCase().includes("died in"));
+            
+            let wikiClass = "wiki-border"; // Default blue
+            let wikiLabelClass = "label-wiki"; // Default blue
+            let wikiContentStyle = "";
+
+            if (isHumanBio) {
+                wikiClass = "golden-node";
+                wikiLabelClass = "golden-header";
+            } else {
+                wikiContentStyle = "color:#00d4ff;"; // Explicitly set blue for content if not human bio
+            }
+
+            html += `
+            <div class="node-block ${wikiClass}">
+                <div class="node-label ${wikiLabelClass}">[WIKI_NODE]</div>
+                <p class="wiki-content" style="${wikiContentStyle}">${wiki.extract}</p>
+                ${getRelevanceLabel(wiki.extract, query)}
+            </div>`;
+        }
+
+        // 3. Hacker News (Green, including links)
+        if (hn && hn.hits && hn.hits.length > 0) {
+            html += `
+            <div class="node-block" style="border-left:2px solid #39ff14;">
+                <div class="node-label" style="color:#39ff14;">[HN_NODE]</div>`;
+            hn.hits.slice(0, 3).forEach(hit => {
+                html += `<p class="wiki-content"><a href="${hit.url}" target="_blank" style="color:#39ff14; text-decoration:none;">▸ ${hit.title}</a></p>`;
+            });
+            html += `</div>`;
+        }
+
+        // 4. DuckDuckGo (Purple) - Only display results not in Wiki
+        if (ddg) {
+            let uniqueSet = new Set();
+            let ddgHtml = "";
+            const rawResults = [...(ddg.RelatedTopics || []), {Text: ddg.AbstractText}]
+                .filter(t => t && t.Text);
+
+            rawResults.forEach(res => {
+                const isWikiDuplicate = (wiki && wiki.extract && wiki.extract.toLowerCase().includes(res.Text.toLowerCase()));
+
+                if (!uniqueSet.has(res.Text) && !isWikiDuplicate) {
+                    uniqueSet.add(res.Text);
+                    ddgHtml += `<p class="wiki-content" style="color:#8a2be2;">▸ ${res.Text}</p>`; // Purple color
+                }
+            });
+
+            if (ddgHtml) {
+                html += `
+                <div class="node-block" style="border-left:2px solid #8a2be2;">
+                    <div class="node-label" style="color:#8a2be2;">[NET_RECON // DDG]</div>
+                    ${ddgHtml}
+                </div>`;
+            }
+        }
+
+        // 5. CVE (Red)
+        if (cve && cve.vulnerabilities) {
+            cve.vulnerabilities.slice(0, 3).forEach(v => {
+                html += renderCVE(v.cve, query);
+            });
+        }
+
+        // 6. Onion Nodes (Existing Purple/Pink) - Now with clickable links
+        if (onion && onion.length > 0) {
+            html += `
+            <div class="node-block onion-border">
+                <div class="node-label label-onion">[TOR_UPLINK // .ONION]</div>
+                ${onion.map(s =>
+                    `<div class="onion-item">
+                        <a href="${s.link}" target="_blank" class="onion-link-text">${s.link}</a>
+                        <p class="onion-desc">${s.title}</p>
+                    </div>`
+                ).join("")}
+            </div>`;
+        }
+
+        html += `</div>`;
+
+        const resultNode = document.createElement("div");
+        savedDiv.appendChild(resultNode);
+
+        typeWriter(resultNode, html, 2);
+        dbSave(query, html);
+
+    } catch (err) {
+        console.error("Render error:", err);
+    } finally {
+        isTyping = false;
+    }
+}
+
+async function fetchVulnerabilities(query) {
+    const url = `https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${encodeURIComponent(query)}`;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        const data = await response.json();
+        return (data && data.vulnerabilities) ? data : null; 
+    } catch (e) {
+        console.warn("CVE Timeout or Blocked:", e);
+        return null; 
+    }
+}
+
+async function fetchOnionNodes(query) {
+    // This function will now only be called for non-direct .onion URL searches
+    // The direct .onion URL handling is done in saveMessage
+    try {
+        const response = await fetch(`proxy.php?query=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        if (!data || data.error || !Array.isArray(data)) return []; 
+        
+        return data.map(site => ({
+            title: site.title || "Unknown Service",
+            link: site.link || "N/A",
+            desc: site.desc || "No metadata available."
+        }));
+    } catch (e) {
+        console.warn("Onion node fetch failed:", e);
+        return [];
+    }
+}
+
+function renderCVE(item, query) {
+    const description = item.descriptions.find(d => d.lang === "en")?.value || "Data Redacted.";
+    const score = item.metrics?.cvssMetricV31?.[0]?.cvssData?.baseScore || "N/A";
+    const relevance = getRelevanceLabel(item.id + description, query);
+    return `
+    <div class="node-cve">
+        <div class="cve-header">[VULNERABILITY_DB]</div>
+        <div class="cve-id-row">
+            <span class="cve-warning-icon">⚠</span>
+            <a href="https://nvd.nist.gov/vuln/detail/${item.id}" target="_blank" style="color:inherit; text-decoration:none;">
+                <span>${item.id}</span>
+            </a>
+            <span style="font-size:0.7rem; margin-left:10px;">(SCORE: ${score})</span>
+        </div>
+        <div class="cve-description">
+            ${description.length > 300 ? description.substring(0, 300) + "..." : description}
+        </div>
+        ${relevance}
+        <div class="cve-divider"></div>
+    </div>`;
+}
+
+    // Helper Functions
+    async function dbSave(q, h) { const tx = db.transaction(STORE_NAME, "readwrite"); tx.objectStore(STORE_NAME).put({ id: q.toLowerCase(), html: h }); updateVaultStats(); }
+    async function dbGet(q) { return new Promise(res => { const req = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).get(q.toLowerCase()); req.onsuccess = () => res(req.result); }); }
+    function updateVaultStats() { if (!db) return; const req = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).count(); req.onsuccess = () => document.getElementById("vault-stats").textContent = `HISTORY: ${req.result} SAVED`; }
+    function clearMessages() { if(confirm("Purge Vault?")) { db.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME).clear(); location.reload(); } }
+    function clearDisplay() { savedDiv.innerHTML = `<p class="NullPointer">> Terminal display purged.</p>`; }
+    function systemLog(msg) { const p = document.createElement("p"); p.className = "ZeroDay"; p.textContent = msg; savedDiv.appendChild(p); }
 </script>
 </body>
 </html>
